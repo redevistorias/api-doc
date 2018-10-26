@@ -1,0 +1,1195 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "description": "Esta é a documentação oficial da API pública da Rede Vistorias.",
+      "version": "1.0",
+      "title": "Rede Vistorias ERP API",
+      "contact": {
+        "email": "ti@redevistorias.com.br"
+      },
+      "license": {
+        "name": "Apache 2.0",
+        "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://api.redevistorias.com.br/erp"
+      }
+    ],
+    "tags": [
+      {
+        "name": "Autenticação",
+        "description": "Para a integração de um serviço externo com a API da Rede Vistorias é necessária a utilização de uma API Key fornecida pelo usuário (ou adquirida no cadastro do cliente). Possuindo uma API Key é possível gerar um 'Bearer token' com validade de 1 dia. Este token é obrigatório em todos os requests na API da Rede Vistorias."
+      },
+      {
+        "name": "Pedidos",
+        "description": "A API da Rede Vistorias provê uma forma de serviços externos realizarem pedidos de vistorias. Todas alterações no pedido que sejam relevantes para o cliente serão notificadas por um webhook no endpoint informado no momento da geração da API Key. Cada webhook possui um formato específico para a ação que ele representa."
+      },
+      {
+        "name": "Price Preview",
+        "description": "A API da Rede Vistorias provê uma rota para simular o preço de uma vistoria."
+      },
+      {
+        "name": "Webhook",
+        "description": "O serviço do Rede Vistorias utilizada webhooks para notificar o ERP sobre mudanças do estado do pedido realizado. Esse webhook é informado pelo usuário do sistema no momento de criação da integração. Os eventos existentes são emitidos quando um pedido é aprovado, rejeitado e finalizado."
+      }
+    ],
+    "schemes": [
+      "https"
+    ],
+    "paths": {
+      "/acceptedWebhook": {
+        "post": {
+          "tags": [
+            "Webhook"
+          ],
+          "summary": "Accepted Webhook",
+          "description": "Este webhook é executado quando o pedido foi aceito.",
+          "operationId": "acceptedWebhook",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/AcceptedWebhook"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+            }
+          }
+        }
+      },
+      "/authentication/token": {
+        "post": {
+          "tags": [
+            "Autenticação"
+          ],
+          "summary": "Gera o token",
+          "description": "![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](/images/apikey_authorization.jpg)",
+          "operationId": "generateToken",
+          "consumes": [
+            "application/json"
+          ],
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "Dados do cliente que deverá ser adicionado",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/TokenFromAPIKey"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "$ref": "#/definitions/Token"
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "/finishedWebhook": {
+        "post": {
+          "tags": [
+            "Webhook"
+          ],
+          "summary": "Finished Webhook",
+          "description": "Este webhook é executado quando a vistoria é executada e finalizada.",
+          "operationId": "finishedWebhook",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/FinishedWebhook"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+            }
+          }
+        }
+      },
+      "/orders": {
+        "post": {
+          "tags": [
+            "Pedidos"
+          ],
+          "summary": "Cadastra um novo pedido de vistoria na API do Rede Vistorias",
+          "description": "",
+          "operationId": "addPedido",
+          "consumes": [
+            "application/json"
+          ],
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": null,
+              "required": true,
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/PedidoEntrada"
+                  },
+                  {
+                    "$ref": "#/definitions/PedidoSaida"
+                  },
+                  {
+                    "$ref": "#/definitions/PedidoConferencia"
+                  },
+                  {
+                    "$ref": "#/definitions/PedidoTransferencia"
+                  }
+                ]
+              }
+            },
+            {
+              "in": "header",
+              "name": "Authorization",
+              "type": "string",
+              "required": true,
+              "example": "Bearer eyJ0eXAiOiJKV1QiL..."
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "example": "VLE.987.00125",
+                    "description": "Código de identificação da vistoria."
+                  },
+                  "price": {
+                    "type": "string",
+                    "example": "85.50",
+                    "description": "Preço a pagar pela vistoria."
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad request."
+            },
+            "401": {
+              "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "/pricePreview": {
+        "post": {
+          "tags": [
+            "Price Preview"
+          ],
+          "summary": "Permite verificar o preço da vistoria.",
+          "description": "",
+          "operationId": "addPricePreview",
+          "consumes": [
+            "application/json"
+          ],
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": null,
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/PricePreview"
+              }
+            },
+            {
+              "in": "header",
+              "name": "Authorization",
+              "type": "string",
+              "required": true,
+              "example": "Bearer eyJ0eXAiOiJKV1QiL..."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "price": {
+                    "type": "string",
+                    "example": "85.50",
+                    "description": "O preço da vistoria."
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad request."
+            },
+            "401": {
+              "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "/rejectedWebhook": {
+        "post": {
+          "tags": [
+            "Webhook"
+          ],
+          "summary": "Rejected Webhook",
+          "description": "Este webhook é executado quando, por razões diversas, o pedido foi rejeitado.",
+          "operationId": "rejectedWebhook",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/RejectedWebhook"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+            }
+          }
+        }
+      }
+    },
+    "definitions": {
+      "AcceptedWebhook": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "VLE.987.00125",
+            "description": "Código do pedido"
+          },
+          "status": {
+            "type": "string",
+            "example": "ACCEPTED",
+            "description": "Estado do pedido"
+          },
+          "building_id": {
+            "type": "string",
+            "example": "Apt 203 - Ed Atol das Rocas",
+            "description": "Identificação do imóvel."
+          },
+          "price": {
+            "type": "string",
+            "example": "75.00",
+            "description": "Preço temporário"
+          },
+          "observation": {
+            "type": "string",
+            "example": "As chaves serão retiradas na imobiliária às 14h do dia 22.",
+            "description": "Observações sobre o pedido"
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "required": [
+          "street",
+          "number",
+          "zipcode",
+          "neighborhood",
+          "city",
+          "state"
+        ],
+        "properties": {
+          "street": {
+            "type": "string",
+            "example": "R. Pastor William Richard Schisler Filho"
+          },
+          "number": {
+            "type": "integer",
+            "example": 452
+          },
+          "complement": {
+            "type": "string",
+            "example": "Sala 3"
+          },
+          "zipcode": {
+            "type": "string",
+            "example": "88034-100"
+          },
+          "neighborhood": {
+            "type": "string",
+            "example": "Itacorubi"
+          },
+          "city": {
+            "type": "string",
+            "example": "Florianópolis"
+          },
+          "state": {
+            "type": "string",
+            "example": "SC",
+            "enum": [
+              "AC",
+              "AL",
+              "AP",
+              "AM",
+              "BA",
+              "CE",
+              "DF",
+              "ES",
+              "GO",
+              "MA",
+              "MT",
+              "MS",
+              "MG",
+              "PA",
+              "PB",
+              "PR",
+              "PE",
+              "PI",
+              "RJ",
+              "RN",
+              "RS",
+              "RO",
+              "RR",
+              "SC",
+              "SP",
+              "SE",
+              "TO"
+            ]
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Cost": {
+        "type": "object",
+        "required": [
+          "notes"
+        ],
+        "properties": {
+          "condominium": {
+            "type": "float",
+            "example": 330,
+            "description": "Valor do condomínio."
+          },
+          "iptu": {
+            "type": "float",
+            "example": 267.9,
+            "description": "Valor do IPTU."
+          },
+          "rent": {
+            "type": "float",
+            "example": 1400,
+            "description": "Valor do aluguel."
+          },
+          "notes": {
+            "type": "string",
+            "example": "Notas que irão aparecer no relatório",
+            "description": "Observações que irão aparecer no relatório final da vistoria."
+          }
+        }
+      },
+      "Detail": {
+        "type": "object",
+        "required": [
+          "building_id",
+          "building_type",
+          "area",
+          "inspection_type",
+          "furnished",
+          "modality",
+          "express"
+        ],
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "example": "Ed. Itacoru II - Bl 8 Apt 301",
+            "description": "Identificação do imóvel."
+          },
+          "building_type": {
+            "type": "string",
+            "example": "Casa",
+            "enum": [
+              "Apartamento",
+              "Casa",
+              "Galpão",
+              "Garagem",
+              "Kitinete",
+              "Loft",
+              "Loja",
+              "Prédio",
+              "Sala",
+              "Duplex",
+              "Terreno"
+            ]
+          },
+          "area": {
+            "type": "float",
+            "example": 345,
+            "description": "Área total do imóvel."
+          },
+          "inspection_type": {
+            "type": "string",
+            "example": "entrada",
+            "enum": [
+              "entrada",
+              "saida",
+              "transferencia",
+              "conferencia"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "example": "Residencial",
+            "enum": [
+              "Residencial",
+              "Comercial",
+              "Galpão"
+            ]
+          },
+          "furnished": {
+            "type": "string",
+            "example": "unfurnished",
+            "enum": [
+              "furnished",
+              "semi-furnished",
+              "unfurnished"
+            ]
+          },
+          "modality": {
+            "type": "string",
+            "example": "premium",
+            "description": "Modalidade do pedido.",
+            "enum": [
+              "standard",
+              "premium"
+            ]
+          },
+          "express": {
+            "type": "boolean",
+            "example": true,
+            "description": "Opção por vistoria express."
+          },
+          "details": {
+            "type": "string",
+            "example": "Retirar as chaves às 14:00.",
+            "description": "Informações adicionais importantes ao pedido, por exemplo, local das chaves, horário de retirada, etc."
+          }
+        }
+      },
+      "FinishedWebhook": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "VLE.987.00125",
+            "description": "Código do pedido"
+          },
+          "status": {
+            "type": "string",
+            "example": "FINISHED",
+            "description": "Estado do pedido"
+          },
+          "building_id": {
+            "type": "string",
+            "example": "Apt 203 - Ed Atol das Rocas",
+            "description": "Identificação do imóvel."
+          },
+          "price": {
+            "type": "string",
+            "example": "75.00",
+            "description": "Preço final."
+          },
+          "page_url": {
+            "type": "string",
+            "example": "https://vistori.as/VLE98700125",
+            "description": "URL do hotiste onde o cliente poderá executar ações sobre este pedido."
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Report"
+            }
+          }
+        }
+      },
+      "Key": {
+        "type": "object",
+        "properties": {
+          "simple": {
+            "type": "integer",
+            "example": 2,
+            "description": "Quantidade de chaves simples existentes para esse imóvel."
+          },
+          "foursided": {
+            "type": "integer",
+            "example": 4,
+            "description": "Quantidade de chaves \"tetra\" existentes para esse imóvel."
+          },
+          "others": {
+            "type": "string",
+            "example": "1 controle remoto",
+            "description": "Quantidade de outros tipos de chaves existentes para esse imóvel."
+          }
+        }
+      },
+      "PedidoEntrada": {
+        "title": "Entrada",
+        "type": "object",
+        "required": [
+          "details",
+          "address",
+          "cost"
+        ],
+        "properties": {
+          "details": {
+            "$ref": "#/definitions/Detail"
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          },
+          "keys": {
+            "$ref": "#/definitions/Key"
+          },
+          "cost": {
+            "$ref": "#/definitions/Cost"
+          },
+          "people": {
+            "$ref": "#/definitions/PessoaEntrada"
+          }
+        }
+      },
+      "PedidoSaida": {
+        "title": "Saída",
+        "type": "object",
+        "required": [
+          "details",
+          "address",
+          "cost"
+        ],
+        "properties": {
+          "details": {
+            "$ref": "#/definitions/Detail"
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          },
+          "keys": {
+            "$ref": "#/definitions/Key"
+          },
+          "cost": {
+            "$ref": "#/definitions/Cost"
+          },
+          "people": {
+            "$ref": "#/definitions/PessoaSaida"
+          }
+        }
+      },
+      "PedidoConferencia": {
+        "title": "Conferência",
+        "type": "object",
+        "required": [
+          "details",
+          "address",
+          "cost"
+        ],
+        "properties": {
+          "details": {
+            "$ref": "#/definitions/Detail"
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          },
+          "keys": {
+            "$ref": "#/definitions/Key"
+          },
+          "cost": {
+            "$ref": "#/definitions/Cost"
+          },
+          "people": {
+            "$ref": "#/definitions/PessoaConferencia"
+          }
+        }
+      },
+      "PedidoTransferencia": {
+        "title": "Transferência",
+        "type": "object",
+        "required": [
+          "details",
+          "address",
+          "cost"
+        ],
+        "properties": {
+          "details": {
+            "$ref": "#/definitions/Detail"
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          },
+          "keys": {
+            "$ref": "#/definitions/Key"
+          },
+          "cost": {
+            "$ref": "#/definitions/Cost"
+          },
+          "people": {
+            "$ref": "#/definitions/PessoaTransferencia"
+          }
+        }
+      },
+      "Person": {
+          "type": "object",
+          "required": [
+              "name"
+          ],
+          "properties": {
+              "name": {
+                  "type": "string",
+                  "example": "Maísa Senna",
+                  "description": "Nome da pessoa"
+              },
+              "signature": {
+                  "type": "boolean",
+                  "example": true,
+                  "description": "Campo que indica se a assinatura é requerida"
+              }
+          }
+      },
+      "HouseHunter": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "inspector"
+            },
+            "title": {
+              "type": "string",
+              "example": "Vistoriador"
+            },
+            "content": {
+              "$ref": "#/definitions/Person"
+            }
+          }
+      },
+      "PropertyManager": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "propertyManager"
+          },
+          "title": {
+            "type": "string",
+            "example": "Property Manager"
+          },
+          "content": {
+            "$ref": "#/definitions/Person"
+          }
+        }
+    },
+      "Owner": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "owner"
+            },
+            "title": {
+              "type": "string",
+              "example": "Dono"
+            },
+            "content": {
+              "type": "array",
+              "items":{
+                "$ref": "#/definitions/Person"
+              }
+            }
+          }
+      },
+      "Tenant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tenant"
+          },
+          "title": {
+            "type": "string",
+            "example": "Tenant"
+          },
+          "content": {
+            "type": "array",
+            "items":{
+              "$ref": "#/definitions/Person"
+            }
+          }
+        }
+      },
+      "Guarantor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "guarantor"
+          },
+          "title": {
+            "type": "string",
+            "example": "Fiador"
+          },
+          "content": {
+            "type": "array",
+            "items":{
+              "$ref": "#/definitions/Person"
+            }
+          }
+        }
+      },
+      "Witness": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "owner"
+          },
+          "title": {
+            "type": "string",
+            "example": "Dono"
+          },
+          "content": {
+            "type": "array",
+            "items":{
+              "$ref": "#/definitions/Person"
+            }
+          }
+        }
+      },
+      "RealEstateAgency": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "realEstateAgency"
+          },
+          "title": {
+            "type": "string",
+            "example": "Real Estate Agency"
+          },
+          "content": {
+            "$ref": "#/definitions/Person"
+          }
+        }
+      },
+      "RealEstateBroker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "realEstateBroker"
+          },
+          "title": {
+            "type": "string",
+            "example": "Real Estate Broker"
+          },
+          "content": {
+            "$ref": "#/definitions/Person"
+          }
+        }
+      },
+      "Seller": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "seller"
+          },
+          "title": {
+            "type": "string",
+            "example": "Comprador"
+          },
+          "content": {
+            "type": "array",
+            "items":{
+              "$ref": "#/definitions/Person"
+            }
+          }
+        }
+      },
+      "Buyer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "buyer"
+          },
+          "title": {
+            "type": "string",
+            "example": "Comprador"
+          },
+          "content": {
+            "type": "array",
+            "items":{
+              "$ref": "#/definitions/Person"
+            }
+          }
+        }
+      },
+      "PessoaEntrada": {
+        "title": "Pessoa",
+        "type": "object",
+        "properties": {
+            "houseHunter": {
+              "$ref": "#/definitions/HouseHunter"
+            },
+            "propertyManager": {
+              "$ref": "#/definitions/PropertyManager"
+            },
+            "owner": {
+              "$ref": "#/definitions/Owner"  
+            },
+            "tenant": {
+              "$ref": "#/definitions/Tenant"
+            },
+            "guarantor": {
+              "$ref": "#/definitions/Guarantor"
+            },
+            "witness": {
+              "$ref": "#/definitions/Witness"
+          } 
+        }
+      },
+      "PessoaSaida": {
+        "title": "Pessoa",
+        "type": "object",
+        "properties": {
+            "houseHunter": {
+              "$ref": "#/definitions/HouseHunter"
+            },
+            "propertyManager": {
+              "$ref": "#/definitions/PropertyManager"
+            },
+            "owner": {
+              "$ref": "#/definitions/Owner"  
+            },
+            "tenant": {
+              "$ref": "#/definitions/Tenant"
+            },
+            "guarantor": {
+              "$ref": "#/definitions/Guarantor"
+            },
+            "witness": {
+              "$ref": "#/definitions/Witness"
+          } 
+        }
+      },
+      "PessoaConferencia": {
+        "title": "Pessoa",
+        "type": "object",
+        "properties": {
+            "houseHunter": {
+              "$ref": "#/definitions/HouseHunter"
+            },
+            "propertyManager": {
+              "$ref": "#/definitions/PropertyManager"
+            },
+            "owner": {
+              "$ref": "#/definitions/Owner"  
+            },
+            "tenant": {
+              "$ref": "#/definitions/Tenant"
+            },
+            "guarantor": {
+              "$ref": "#/definitions/Guarantor"
+            },
+            "witness": {
+              "$ref": "#/definitions/Witness"
+          } 
+        }
+      },
+      "PessoaTransferencia": {
+        "title": "Pessoa",
+        "type": "object",
+        "properties": {
+          "houseHunter": {
+            "$ref": "#/definitions/HouseHunter"
+          },
+          "realEstateAgency": {
+            "$ref": "#/definitions/RealEstateAgency"
+          },
+          "realEstateBroker": {
+            "$ref": "#/definitions/RealEstateBroker"
+          },
+          "seller": {
+            "$ref": "#/definitions/Seller"
+          },
+          "buyer": {
+            "$ref": "#/definitions/Buyer"
+          },
+          "witness": {
+            "$ref": "#/definitions/Witness"
+          }
+        }
+      },
+      "PricePreview": {
+        "type": "object",
+        "required": [
+          "inspection_type",
+          "building_type",
+          "area",
+          "furnished",
+          "modality",
+          "express"
+        ],
+        "properties": {
+          "inspection_type": {
+            "type": "string",
+            "example": "entrada",
+            "description": "Tipo de vistoria que deve ser executada",
+            "enum": [
+              "entrada",
+              "saida",
+              "transferencia",
+              "conferencia"
+            ]
+          },
+          "building_type": {
+            "type": "string",
+            "example": "Casa",
+            "description": "Tipo de imóvel",
+            "enum": [
+              "Apartamento",
+              "Casa",
+              "Galpão",
+              "Garagem",
+              "Kitinete",
+              "Loft",
+              "Loja",
+              "Prédio",
+              "Sala",
+              "Duplex",
+              "Terreno"
+            ]
+          },
+          "area": {
+            "type": "float",
+            "example": 76,
+            "description": "Área total do imóvel."
+          },
+          "furnished": {
+            "type": "string",
+            "example": "furnished",
+            "description": "Estado do imóvel",
+            "enum": [
+              "furnished",
+              "semi-furnished",
+              "unfurnished"
+            ]
+          },
+          "modality": {
+            "type": "string",
+            "example": "premium",
+            "description": "Modalidade do pedido",
+            "enum": [
+              "standard",
+              "premium"
+            ]
+          },
+          "express": {
+            "type": "boolean",
+            "example": true,
+            "description": "Opção por vistoria express"
+          }
+        }
+      },
+      "RejectedWebhook": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "VLE.987.00125",
+            "description": "Código do pedido"
+          },
+          "status": {
+            "type": "string",
+            "example": "REJECTED",
+            "description": "Estado do pedido"
+          },
+          "building_id": {
+            "type": "string",
+            "example": "Apt 203 - Ed Atol das Rocas",
+            "description": "Identificação do imóvel."
+          },
+          "observation": {
+            "type": "string",
+            "example": "Endereço não tem cobertura do serviço",
+            "description": "Razão da recusa"
+          }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "inspection",
+            "description": "Tipo de relatório"
+          },
+          "label": {
+            "type": "string",
+            "example": "Relatório de vistoria",
+            "description": "Nome do relatório"
+          },
+          "withPcitures": {
+            "type": "boolean",
+            "example": true,
+            "description": "Informa se o relatório possui imagens."
+          },
+          "file_url": {
+            "type": "string",
+            "example": "https://relatorio.redevistorias.com.br/7f4c77a...",
+            "description": "URL onde o relatório pode ser obtido"
+          }
+        }
+      },
+      "Responsible": {
+        "type": "object",
+        "description": "Aplicável apenas quando o cliente for pessoa jurídica (pj).",
+        "required": [
+          "name",
+          "document",
+          "phone",
+          "email",
+          "address"
+        ],
+        "properties": {
+          "document": {
+            "type": "string",
+            "example": "000.000.999-99",
+            "description": "CPF do responsável da empresa."
+          },
+          "name": {
+            "type": "string",
+            "example": "Novo Usuário",
+            "description": "Nome completo do responsável da empresa."
+          },
+          "cellphone": {
+            "type": "string",
+            "example": "(48) 99999-9999",
+            "description": "Telefone celular do responsável da empresa, se houver."
+          },
+          "phone": {
+            "type": "string",
+            "example": "(48) 3000-0000",
+            "description": "Telefone do responsável da empresa."
+          },
+          "email": {
+            "type": "string",
+            "example": "ti@redevistorias.com.br",
+            "description": "Email do responsável da empresa."
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          }
+        }
+      },
+      "Token": {
+        "type": "object",
+        "properties": {
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ]
+          },
+          "expires_in": {
+            "type": "integer",
+            "example": 86400
+          },
+          "access_token": {
+            "type": "string",
+            "example": "eyJ0eXAiO..."
+          },
+          "refresh_token": {
+            "type": "string",
+            "example": "def50200f44a3a36..."
+          }
+        }
+      },
+      "TokenFromAPIKey": {
+        "type": "object",
+        "required": [
+          "grant_type",
+          "client_id",
+          "client_secret",
+          "api_key"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": [
+              "api_key"
+            ]
+          },
+          "client_id": {
+            "type": "string",
+            "example": "erpfoo",
+            "description": "Identificação do ERP na API da Rede Vistorias, essa informação é fornecida pela equipe da Rede Vistorias no momento da habilitação do ERP."
+          },
+          "client_secret": {
+            "type": "string",
+            "example": "B8WbfvPVX1ic",
+            "description": "Senha do ERP na API da Rede Vistorias"
+          },
+          "api_key": {
+            "type": "string",
+            "example": "ZAltqyeoXLlZLR6N9QP0QfyE7asIz65wZ8eBfBDr8o7W4dk9W93beJy0rZleOgQmmkm4jkkW54kv7dxh"
+          }
+        }
+      }
+    }
+  }
+  

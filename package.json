@@ -1,0 +1,8 @@
+{
+  "name": "redevistorias-api-doc",
+  "version": "1.0",
+  "description": "API documentation from Rede Vistorias",
+  "dependencies": {
+    "redoc": "^2.0.0-alpha.40"
+  }
+}
