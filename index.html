@@ -4,27 +4,11 @@
     <title>Rede Vistorias API</title>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
-      p {
-        text-align: justify;
-        line-height: 1.8;
-      }
-      img {
-        padding: 3%;
-      }
-
-      li {
-        line-height: 1.8;
-      }
-    </style>
   </head>
   <body>
-    <redoc spec-url='swagger.json' hide-hostname="true"></redoc>
-    <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
+    <script>
+      const latestProdVersion = '/1.0';
+      window.location.replace(latestProdVersion);
+    </script>
   </body>
 </html>
