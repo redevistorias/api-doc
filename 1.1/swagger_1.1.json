@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-      "description": "Esta é a documentação oficial da API pública da Rede Vistorias.",
-      "version": "1.0",
+      "description": "Esta é a documentação oficial da API pública da Rede Vistorias. <br /><br />Além do ambiente de produção, oferecemos um ambiente de testes (sandbox): <br /><ul><li>Produção: https://api.redevistorias.com.br/erp</li><li>Sandbox: https://api.sandbox.redevistorias.com.br/erp</li></ul>.<br />As rotas de autenticação, por sua vez, possuem sua própria URL, também possuindo ambientes de produção e sandbox: <br /><br /> <ul><li>Produção: https://auth.redevistorias.com.br</li><li>Sandbox: https://auth.sandbox.redevistorias.com.br</li></ul>",
+      "version": "1.1",
       "title": "Rede Vistorias ERP API",
       "contact": {
         "email": "ti@redevistorias.com.br"
@@ -14,13 +14,17 @@
     },
     "servers": [
       {
-        "url": "https://api.redevistorias.com.br/erp"
+        "url": "/"
       }
     ],
     "tags": [
       {
         "name": "Autenticação",
         "description": "Para a integração de um serviço externo com a API da Rede Vistorias é necessária a utilização de uma API Key fornecida pelo usuário (ou adquirida no cadastro do cliente). Possuindo uma API Key é possível gerar um 'Bearer token' com validade de 1 dia. Este token é obrigatório em todos os requests na API da Rede Vistorias."
+      },
+      {
+        "name": "Clientes",
+        "description": "Integração de novos clientes à API da Rede Vistorias."
       },
       {
         "name": "Pedidos",
@@ -39,41 +43,13 @@
       "https"
     ],
     "paths": {
-      "/acceptedWebhook": {
-        "post": {
-          "tags": [
-            "Webhook"
-          ],
-          "summary": "Accepted Webhook",
-          "description": "Este webhook é executado quando o pedido foi aceito.",
-          "operationId": "acceptedWebhook",
-          "produces": [
-            "application/json"
-          ],
-          "parameters": [
-            {
-              "in": "body",
-              "name": "body",
-              "required": true,
-              "schema": {
-                "$ref": "#/definitions/AcceptedWebhook"
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "OK"
-            }
-          }
-        }
-      },
-      "/authentication/token": {
+      "https://auth.sandbox.redevistorias.com.br/authentication/token": {
         "post": {
           "tags": [
             "Autenticação"
           ],
-          "summary": "Gera o token",
-          "description": "![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](images/apikey_authorization.jpg)",
+          "summary": "Gera o token de acesso",
+          "description": "URL de acesso (sandbox): https://auth.sandbox.redevistorias.com.br/authentication/token <br />URL de acesso: https://auth.redevistorias.com.br/authentication/token <br />![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)<br /><br />Esta requisição aceita dois tipos de \"grant_type\": <ul><li>api_key: O token gerado neste tipo de requisição é utilizado para fazer novos pedidos na API (utilizado nas requisições de <a href='#tag/Pedidos'>Pedidos</a> ou <a href='#tag/Price-Preview'>Price Preview</a>)</li><li>client_credentials: Utilizado para cadastrar novos clientes em nossa API.</li></ul> ",
           "operationId": "generateToken",
           "consumes": [
             "application/json"
@@ -88,7 +64,14 @@
               "description": "Dados do cliente que deverá ser adicionado",
               "required": true,
               "schema": {
-                "$ref": "#/definitions/TokenFromAPIKey"
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/TokenERP"
+                  },
+                  {
+                    "$ref": "#/definitions/TokenERPClient"
+                  }
+                ]
               }
             }
           ],
@@ -96,7 +79,7 @@
             "200": {
               "description": "OK",
               "schema": {
-                "$ref": "#/definitions/Token"
+                "$ref": "#/definitions/TokenResponse"
               }
             },
             "401": {
@@ -105,41 +88,76 @@
           }
         }
       },
-      "/finishedWebhook": {
+      "https://api.sandbox.redevistorias.com.br/erp/clients": {
         "post": {
           "tags": [
-            "Webhook"
+            "Clientes"
           ],
-          "summary": "Finished Webhook",
-          "description": "Este webhook é executado quando a vistoria é executada e finalizada.",
-          "operationId": "finishedWebhook",
+          "summary": "Cadastra um novo cliente na API do Rede Vistorias",
+          "description": "URL de acesso (sandbox): https://api.sandbox.redevistorias.com.br/erp/clients <br /><br />URL de acesso: https://api.redevistorias.com.br/erp/clients <br /><br />Novos clientes podem ser cadastrados diretamente pela API disponibilizada pela Rede Vistorias, passando os dados informados abaixo. <br /><br /> ![Diagrama de criação do cliente através da API](../images/new_client.jpg) <br /><br />Todavia, caso o cliente já exista em nosso banco de dados, um erro de conflito será gerado.",
+          "operationId": "addNaturalPerson",
+          "consumes": [
+            "application/json"
+          ],
           "produces": [
             "application/json"
           ],
           "parameters": [
             {
+              "in": "header",
+              "name": "Authorization",
+              "type": "string",
+              "required": true,
+              "example": "Bearer eyJ0eXAiOiJKV1QiL..."
+            },
+            {
               "in": "body",
               "name": "body",
+              "description": "A API da Rede Vistorias provê uma forma de serviços externos adicionar novos clientes no sistema. Este cliente pode ser tanto uma pessoa física quanto uma pessoa jurídica. No caso do cliente ser pessoa jurídica, é necessário também informar os dados do responsável na empresa - seu documento, nome, contato e endereço.",
               "required": true,
               "schema": {
-                "$ref": "#/definitions/FinishedWebhook"
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/ClientPessoaFisica"
+                  },
+                  {
+                    "$ref": "#/definitions/ClientPessoaJuridica"
+                  }
+                ]
               }
             }
           ],
           "responses": {
-            "200": {
-              "description": "OK"
+            "201": {
+              "description": "Created",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "api_key": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request"
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "409": {
+              "description": "Already existing client"
             }
           }
         }
       },
-      "/orders": {
+      "https://api.sandbox.redevistorias.com.br/erp/orders": {
         "post": {
           "tags": [
             "Pedidos"
           ],
           "summary": "Cadastra um novo pedido de vistoria na API do Rede Vistorias",
-          "description": "",
+          "description": "URL de acesso (sandbox): https://api.sandbox.redevistorias.com.br/erp/orders <br /><br />URL de acesso: https://api.redevistorias.com.br/erp/orders",
           "operationId": "addPedido",
           "consumes": [
             "application/json"
@@ -148,6 +166,13 @@
             "application/json"
           ],
           "parameters": [
+            {
+              "in": "header",
+              "name": "Authorization",
+              "type": "string",
+              "required": true,
+              "example": "Bearer eyJ0eXAiOiJKV1QiL..."
+            },
             {
               "in": "body",
               "name": "body",
@@ -169,13 +194,6 @@
                   }
                 ]
               }
-            },
-            {
-              "in": "header",
-              "name": "Authorization",
-              "type": "string",
-              "required": true,
-              "example": "Bearer eyJ0eXAiOiJKV1QiL..."
             }
           ],
           "responses": {
@@ -206,13 +224,13 @@
           }
         }
       },
-      "/pricePreview": {
+      "https://api.sandbox.redevistorias.com.br/erp/price_preview": {
         "post": {
           "tags": [
             "Price Preview"
           ],
           "summary": "Permite verificar o preço da vistoria.",
-          "description": "",
+          "description": "URL de acesso (sandbox): https://api.sandbox.redevistorias.com.br/erp/price_preview <br /><br />URL de acesso: https://api.redevistorias.com.br/erp/price_preview",
           "operationId": "addPricePreview",
           "consumes": [
             "application/json"
@@ -257,6 +275,62 @@
             },
             "401": {
               "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "/acceptedWebhook": {
+        "post": {
+          "tags": [
+            "Webhook"
+          ],
+          "summary": "Accepted Webhook",
+          "description": "Este webhook é executado quando o pedido foi aceito.",
+          "operationId": "acceptedWebhook",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/AcceptedWebhook"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
+            }
+          }
+        }
+      },
+      "/finishedWebhook": {
+        "post": {
+          "tags": [
+            "Webhook"
+          ],
+          "summary": "Finished Webhook",
+          "description": "Este webhook é executado quando a vistoria é executada e finalizada.",
+          "operationId": "finishedWebhook",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "required": true,
+              "schema": {
+                "$ref": "#/definitions/FinishedWebhook"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK"
             }
           }
         }
@@ -406,6 +480,126 @@
           }
         }
       },
+      "ClientPessoaFisica": {
+        "title": "Pessoa Física",
+        "type": "object",
+        "required": [
+          "client_type",
+          "document",
+          "name",
+          "email",
+          "phone",
+          "address",
+          "hooks"
+        ],
+        "properties": {
+          "client_type": {
+            "type": "string",
+            "example": "pf",
+            "description": "pf para Pessoa Física"
+          },
+          "document": {
+            "type": "string",
+            "example": "000.000.999-99",
+            "description": "Identificador do cliente, CPF para pessoas físicas."
+          },
+          "name": {
+            "type": "string",
+            "example": "Novo Usuário",
+            "description": "Nome completo do usuário, em caso de pessoa física."
+          },
+          "cellphone": {
+            "type": "string",
+            "example": "(48) 99999-9999",
+            "description": "Telefone celular do usuário, se houver."
+          },
+          "phone": {
+            "type": "string",
+            "example": "(48) 3000-0000",
+            "description": "Telefone do usuário."
+          },
+          "email": {
+            "type": "string",
+            "example": "ti@redevistorias.com.br",
+            "description": "Email do usuário."
+          },
+          "website": {
+            "type": "string",
+            "example": "http://redevistorias.com.br",
+            "description": "Site do cliente, se houver."
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          },
+          "hooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Hook"
+            }
+          }
+        }
+      },
+      "ClientPessoaJuridica": {
+        "title": "Pessoa Jurídica",
+        "type": "object",
+        "required": [
+          "client_type",
+          "document",
+          "name",
+          "email",
+          "phone",
+          "address"
+        ],
+        "properties": {
+          "client_type": {
+            "type": "string",
+            "example": "pj",
+            "description": "pj para Pessoa Jurídica"
+          },
+          "document": {
+            "type": "string",
+            "example": "00.111.333/1000-98",
+            "description": "Identificador do cliente: CNPJ, para pessoas jurídicas."
+          },
+          "name": {
+            "type": "string",
+            "example": "Novo Usuário",
+            "description": "Razão social, no caso de pessoa jurídica."
+          },
+          "cellphone": {
+            "type": "string",
+            "example": "(48) 99999-9999",
+            "description": "Telefone celular do usuário, se houver."
+          },
+          "phone": {
+            "type": "string",
+            "example": "(48) 3000-0000",
+            "description": "Telefone do usuário."
+          },
+          "email": {
+            "type": "string",
+            "example": "ti@redevistorias.com.br",
+            "description": "Email do usuário."
+          },
+          "website": {
+            "type": "string",
+            "example": "http://redevistorias.com.br",
+            "description": "Site do cliente, se houver."
+          },
+          "address": {
+            "$ref": "#/definitions/Address"
+          },
+          "responsible": {
+            "$ref": "#/definitions/Responsible"
+          },
+          "hooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Hook"
+            }
+          }
+        }
+      },
       "Cost": {
         "type": "object",
         "required": [
@@ -448,6 +642,7 @@
         "properties": {
           "building_id": {
             "type": "string",
+            "maxLength": 30,
             "example": "Ed. Itacoru II - Bl 8 Apt 301",
             "description": "Identificação do imóvel."
           },
@@ -555,6 +750,23 @@
             "items": {
               "$ref": "#/definitions/Report"
             }
+          }
+        }
+      },
+      "Hook": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "webhook",
+            "enum": [
+              "webhook"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "example": "http://example.co/hook",
+            "description": "URL that handle the hook"
           }
         }
       },
@@ -1097,7 +1309,7 @@
       },
       "Responsible": {
         "type": "object",
-        "description": "Aplicável apenas quando o cliente for pessoa jurídica (pj).",
+        "description": "Dados referentes à pessoa física responsável pela empresa.",
         "required": [
           "name",
           "document",
@@ -1136,7 +1348,7 @@
           }
         }
       },
-      "Token": {
+      "TokenResponse": {
         "type": "object",
         "properties": {
           "token_type": {
@@ -1159,8 +1371,9 @@
           }
         }
       },
-      "TokenFromAPIKey": {
+      "TokenERP": {
         "type": "object",
+        "title": "api_key",
         "required": [
           "grant_type",
           "client_id",
@@ -1187,6 +1400,43 @@
           "api_key": {
             "type": "string",
             "example": "ZAltqyeoXLlZLR6N9QP0QfyE7asIz65wZ8eBfBDr8o7W4dk9W93beJy0rZleOgQmmkm4jkkW54kv7dxh"
+          }
+        }
+      },
+      "TokenERPClient": {
+        "type": "object",
+        "title": "client_credentials",
+        "required": [
+          "grant_type",
+          "client_id",
+          "client_secret",
+          "scope"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "example": "client_credentials",
+            "enum": [
+              "client_credentials"
+            ]
+          },
+          "client_id": {
+            "type": "string",
+            "example": "erpfoo",
+            "description": "Identificação do cliente na API do Rede Vistorias."
+          },
+          "client_secret": {
+            "type": "string",
+            "example": "B8WbfvPVX1ic",
+            "description": "Senha do cliente na API da Rede Vistorias"
+          },
+          "scope": {
+            "type": "string",
+            "example": "client:create",
+            "description": "Lista de escopos, separados por um espaço em branco.",
+            "enum": [
+              "client:create"
+            ]
           }
         }
       }
