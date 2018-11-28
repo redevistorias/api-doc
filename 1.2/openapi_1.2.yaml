@@ -32,7 +32,18 @@ tags:
   - name: Clientes
     description: Integração de novos clientes à API da Rede Vistorias.
   - name: Integrações
-    description: ' Realiza a integração com clientes já existentes. '
+    description: |
+      ![Diagrama de criação do cliente através da API](../images/existing_client.jpg)
+
+      Caso o cliente a ser cadastrado já exista no nosso banco de dados, um aviso
+      será retornado, informando que o cliente já existe em nossa base de dados (1.1).
+      Assim, será necessário acessar a página de login (2), e, após fazer o login,
+      conceder as permissões necessárias (2.1). Feito isso, será retornado um código de
+      autorização (2.2). Com este código deverá ser feita uma requisição (3), em nosso
+      servidor de autenticação, que retornará o token de autenticação do usuário (3.1).  
+      Com este token, é possível fazer uma requisição à API da Rede Vistorias, para fazer
+      a integração ([4](#operation/addIntegration)), recebendo na resposta a API key, utilizada na geração do token
+      de autenticação requerido pelos demais endpoints da API (4.1).
   - name: Pedidos
     description: >-
       A API da Rede Vistorias provê uma forma de serviços externos realizarem
@@ -60,34 +71,41 @@ paths:
       description: |
         ![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)
 
-        Esta requisição aceita dois tipos de "grant_type":
+        Esta requisição aceita três tipos de "grant_type":
         - **api_key**: O token gerado neste tipo de requisição é utilizado para
         fazer novos pedidos na API (utilizado nas requisições de Pedidos ou
         Price Preview)
         - **client_credentials**: Utilizado para cadastrar novos clientes e
         integrações em nossa API.
+        - **code**:
       operationId: generateToken
       servers:
         - url: https://auth.sandbox.redevistorias.com.br/
         - url: https://auth.redevistorias.com.br/
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/APIKeyGrant'
+                - $ref: '#/components/schemas/ClientCredentialsGrant'
+                - $ref: '#/components/schemas/AuthorizationCodeRequest'
+                - $ref: '#/components/schemas/AuthorizationCodeGrant'
+        description: Dados do cliente que deverá ser adicionado
+        required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/APIKeyResponse'
+                  - $ref: '#/components/schemas/ClientCredentialsResponse'
+                  - $ref: '#/components/schemas/CodeResponse'
+                  - $ref: '#/components/schemas/AuthorizationCodeResponse'
         '401':
           description: Unauthorized
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: '#/components/schemas/TokenERP'
-                - $ref: '#/components/schemas/TokenERPClient'
-        description: Dados do cliente que deverá ser adicionado
-        required: true
   /clients:
     post:
       tags:
@@ -659,8 +677,8 @@ components:
             - webhook
         url:
           type: string
-          example: 'http://example.co/hook'
-          description: URL that handle the hook
+          example: 'https://seu.erp.com.br/hook'
+          description: URL do endpoint que receberá o webhook com as atualizações do pedido.
     Key:
       type: object
       properties:
@@ -1075,25 +1093,9 @@ components:
           description: Email do responsável da empresa.
         address:
           $ref: '#/components/schemas/Address'
-    TokenResponse:
+    APIKeyGrant:
       type: object
-      properties:
-        token_type:
-          type: string
-          enum:
-            - Bearer
-        expires_in:
-          type: integer
-          example: 86400
-        access_token:
-          type: string
-          example: eyJ0eXAiO...
-        refresh_token:
-          type: string
-          example: def50200f44a3a36...
-    TokenERP:
-      type: object
-      title: api_key
+      title: API Key
       required:
         - grant_type
         - client_id
@@ -1119,9 +1121,9 @@ components:
           type: string
           example: >-
             ZAltqyeoXLlZLR6N9QP0QfyE7asIz65wZ8eBfBDr8o7W4dk9W93beJy0rZleOgQmmkm4jkkW54kv7dxh
-    TokenERPClient:
+    ClientCredentialsGrant:
       type: object
-      title: client_credentials
+      title: Client Credentials
       required:
         - grant_type
         - client_id
@@ -1147,3 +1149,124 @@ components:
           description: 'Lista de escopos, separados por um espaço em branco.'
           enum:
             - 'client:create'
+    AuthorizationCodeRequest:
+      type: object
+      title: Request Authorization
+      required:
+        - response_type
+        - client_id
+        - redirect_uri
+        - scope
+      properties:
+        response_type:
+          type: string
+          example: code
+          enum:
+            - code
+        client_id:
+          type: string
+          example: erpfoo
+          description: Identificação do cliente na API do Rede Vistorias.
+        redirect_uri:
+          type: string
+          example: http://meu.erp.com.br/processar_integracao
+          description: URL que o usuário será redirecionado após realizar a autorizarização.
+        scope:
+          type: string
+          example: 'order:* financial:view'
+          description: 'Lista de escopos, separados por um espaço em branco.'
+        state:
+          type: string
+          example: 1f3870be274f6c49b3e31a0c6728957f
+          description: CSRF token
+    AuthorizationCodeGrant:
+      type: object
+      title: Authorization Code Grant
+      required:
+        - grant_type
+        - client_id
+        - client_secret
+        - redirect_uri
+        - scope
+      properties:
+        grant_type:
+          type: string
+          example: authorization_code
+          enum:
+            - authorization_code
+        client_id:
+          type: string
+          example: erpfoo
+          description: Identificação do cliente na API do Rede Vistorias.
+        client_secret:
+          type: string
+          example: B8WbfvPVX1ic
+          description: Senha do cliente na API da Rede Vistorias
+        redirect_uri:
+          type: string
+          example: http://meu.erp.com.br/processar_integracao
+          description: URL que receberá o `Bearer token`
+        scope:
+          type: string
+          example: 'order:* financial:view'
+          description: 'Lista de escopos, separados por um espaço em branco.'
+    APIKeyResponse:
+      type: object
+      title: API Key response
+      properties:
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          example: 86400
+        access_token:
+          type: string
+          example: eyJ0eXAiO...
+        refresh_token:
+          type: string
+          example: def50200f44a3a36...
+    ClientCredentialsResponse:
+      type: object
+      title: Client credentials response
+      properties:
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          example: 86400
+        access_token:
+          type: string
+          example: eyJ0eXAiO...
+    CodeResponse:
+      type: object
+      title: Request authorization response
+      properties:
+        code:
+          type: string
+          example: tyqwu16573753...
+          description: Codigo de autorização
+        state:
+          type: string
+          example: 1f3870be274f6c49b3e31a0c6728957f
+          description: CSRF token
+    AuthorizationCodeResponse:
+      type: object
+      title: Authorization code response
+      properties:
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          example: 86400
+        access_token:
+          type: string
+          example: eyJ0eXAiO...
+        refresh_token:
+          type: string
+          example: def50200f44a3a36...
