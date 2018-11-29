@@ -146,7 +146,17 @@
               "description": "Unauthorized"
             },
             "409": {
-              "description": "Already existing client"
+              "description": "Already existing client",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "auth_domain": {
+                    "type": "string",
+                    "example": "https://painel.redevistorias.com.br/integration",
+                    "description": "Pagina para o usuário realizar a integração manual."
+                  }
+                }
+              }
             }
           }
         }
