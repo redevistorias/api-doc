@@ -77,7 +77,8 @@ paths:
         Price Preview)
         - **client_credentials**: Utilizado para cadastrar novos clientes e
         integrações em nossa API.
-        - **code**:
+        - **code**: Utilizado para acessar o sistema como sendo o usuário e
+        fazer a integração.
       operationId: generateToken
       servers:
         - url: https://auth.sandbox.redevistorias.com.br/
@@ -1188,6 +1189,7 @@ components:
         - client_secret
         - redirect_uri
         - scope
+        - code
       properties:
         grant_type:
           type: string
@@ -1210,6 +1212,10 @@ components:
           type: string
           example: 'order:* financial:view'
           description: 'Lista de escopos, separados por um espaço em branco.'
+        code:
+          type: string
+          example: tyqwu16573753...
+          description: Codigo de autorização
     APIKeyResponse:
       type: object
       title: API Key response
