@@ -48,7 +48,7 @@
       "https"
     ],
     "paths": {
-      "https://auth.sandbox.redevistorias.com.br/authentication/token": {
+      "https://auth.sandbox.redevistorias.com.br/token": {
         "post": {
           "tags": [
             "Autenticação"
@@ -57,7 +57,7 @@
           "description": "URL de acesso (sandbox): https://auth.sandbox.redevistorias.com.br/authentication/token <br />URL de acesso: https://auth.redevistorias.com.br/authentication/token <br />![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)<br /><br />Esta requisição aceita dois tipos de \"grant_type\": <ul><li>api_key: O token gerado neste tipo de requisição é utilizado para fazer novos pedidos na API (utilizado nas requisições de <a href='#tag/Pedidos'>Pedidos</a> ou <a href='#tag/Price-Preview'>Price Preview</a>)</li><li>client_credentials: Utilizado para cadastrar novos clientes e integrações em nossa API.</li></ul> ",
           "operationId": "generateToken",
           "consumes": [
-            "application/json"
+            "application/x-www-form-urlencoded"
           ],
           "produces": [
             "application/json"

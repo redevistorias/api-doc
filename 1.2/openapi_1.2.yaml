@@ -72,7 +72,7 @@ paths:
         ![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)
 
         Esta requisição aceita três tipos de "grant_type":
-        - **api_key**: O token gerado neste tipo de requisição é utilizado para
+        - **api_key**: O token gerado neste tipo de requisição é utilizado para 
         fazer novos pedidos na API (utilizado nas requisições de Pedidos ou
         Price Preview)
         - **client_credentials**: Utilizado para cadastrar novos clientes e
@@ -493,6 +493,7 @@ components:
         - email
         - phone
         - address
+        - responsible
       properties:
         client_type:
           type: string
@@ -1068,9 +1069,6 @@ components:
       required:
         - name
         - document
-        - phone
-        - email
-        - address
       properties:
         document:
           type: string
