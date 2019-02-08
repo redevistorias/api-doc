@@ -555,10 +555,7 @@
         "required": [
           "client_type",
           "document",
-          "name",
-          "email",
-          "phone",
-          "address"
+          "name"
         ],
         "properties": {
           "client_type": {
