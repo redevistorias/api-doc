@@ -114,7 +114,9 @@ paths:
       description: >-
         Utilizando esta rota, é possível conseguir a URL para upload de um arquivo
         na nossa plataforma, associando este arquivo a um remote-name, utilizado por outras
-        rotas.
+        rotas. Assim, é possível fazer upload na plataforma da S3, fazendo uma requisição do tipo
+        PUT na URL gerada, e passando o arquivo na requisição. Maiores informações podem ser obtidas
+        na <a href="https://docs.aws.amazon.com/pt_br/AmazonS3/latest/dev/PresignedUrlUploadObject.html" target="_blank">documentação da Amazon</a>.
       operationId: uploadURL
       parameters:
         - in: header
@@ -423,7 +425,7 @@ components:
           type: string
           example: R. Pastor William Richard Schisler Filho
         number:
-          type: integer
+          type: string
           example: 452
         complement:
           type: string
@@ -589,10 +591,6 @@ components:
           type: number
           example: 1400
           description: Valor do aluguel.
-        notes:
-          type: string
-          example: Notas que irão aparecer no relatório
-          description: Observações que irão aparecer no relatório final da vistoria.
     Detail:
       type: object
       required:
@@ -667,6 +665,10 @@ components:
           description: >-
             Informações adicionais importantes ao pedido, por exemplo, local das
             chaves, horário de retirada, etc.
+    Notes:
+        type: string
+        example: Notas que irão aparecer no relatório
+        description: Observações que irão aparecer no relatório final da vistoria.
     FinishedWebhook:
       type: object
       properties:
@@ -755,6 +757,8 @@ components:
           $ref: '#/components/schemas/Cost'
         people:
           $ref: '#/components/schemas/PessoaEntrada'
+        notes:
+          $ref: '#/components/schemas/Notes'
     PedidoSaida:
       title: Saída
       type: object
@@ -776,6 +780,8 @@ components:
           $ref: '#/components/schemas/PessoaSaida'
         previous_inspection:
           $ref: '#/components/schemas/PreviousInspection'
+        notes:
+          $ref: '#/components/schemas/Notes'
     PedidoConferencia:
       title: Conferência
       type: object
@@ -797,6 +803,8 @@ components:
           $ref: '#/components/schemas/PessoaConferencia'
         previous_inspection:
           $ref: '#/components/schemas/PreviousInspection'
+        notes:
+          $ref: '#/components/schemas/Notes'
     PedidoTransferencia:
       title: Transferência
       type: object
@@ -815,6 +823,8 @@ components:
           $ref: '#/components/schemas/Cost'
         people:
           $ref: '#/components/schemas/PessoaTransferencia'
+        notes:
+          $ref: '#/components/schemas/Notes'
     Person:
       type: object
       required:
