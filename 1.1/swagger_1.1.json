@@ -37,6 +37,10 @@
       {
         "name": "Webhook",
         "description": "O serviço do Rede Vistorias utilizada webhooks para notificar o ERP sobre mudanças do estado do pedido realizado. Esse webhook é informado pelo usuário do sistema no momento de criação da integração. Os eventos existentes são emitidos quando um pedido é aprovado, rejeitado e finalizado."
+      },
+      {
+        "name": "UploadURL",
+        "description": "A API da Rede Vistorias provê uma URL assinada pelo S3, para upload de arquivos."
       }
     ],
     "schemes": [
@@ -52,15 +56,15 @@
           "description": "URL de acesso (sandbox): https://auth.sandbox.redevistorias.com.br/token <br />URL de acesso: https://auth.redevistorias.com.br/token <br />![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)<br /><br />Esta requisição aceita dois tipos de \"grant_type\": <ul><li>api_key: O token gerado neste tipo de requisição é utilizado para fazer novos pedidos na API (utilizado nas requisições de <a href='#tag/Pedidos'>Pedidos</a> ou <a href='#tag/Price-Preview'>Price Preview</a>)</li><li>client_credentials: Utilizado para cadastrar novos clientes em nossa API.</li></ul> ",
           "operationId": "generateToken",
           "consumes": [
-            "application/json"
+            "application/x-www-form-urlencoded"
           ],
           "produces": [
             "application/json"
           ],
           "parameters": [
             {
-              "in": "body",
-              "name": "body",
+              "in": "formData",
+              "name": "formData",
               "description": "Dados do cliente que deverá ser adicionado",
               "required": true,
               "schema": {
@@ -84,6 +88,58 @@
             },
             "401": {
               "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "https://api.sandbox.redevistorias.com.br/erp/upload_url": {
+        "post": {
+          "tags": [
+            "UploadURL"
+          ],
+          "summary": "Gera uma URL assinada no S3",
+          "description": "Gera uma URL assinada do S3, permitindo salvar um arquivo (pdf). Esta ação é utilizada nos casos dos pedidos que requerem uma inspeção anterior (Saída e Transferência).",
+          "operationId": "uploadURL",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [
+            {
+              "in": "header",
+              "name": "Authorization",
+              "type": "string",
+              "required": true,
+              "example": "Bearer eyJ0eXAiOiJKV1QiL..."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Generated",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "remote_name": {
+                    "type": "string",
+                    "example": "75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D"
+                  },
+                  "url": {
+                    "type": "string",
+                    "example": "https:\/\/s3.amazonaws.com\/upload.dev.redevistorias.com.br\/75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D?x-amz-acl=public-read-write&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Security..."
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal Error",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "example": "Error trying to generate the URL."
+                  }
+                }
+              }
             }
           }
         }
@@ -166,8 +222,8 @@
           "tags": [
             "Pedidos"
           ],
-          "summary": "Cadastra um novo pedido de vistoria na API do Rede Vistorias",
-          "description": "URL de acesso (sandbox): https://api.sandbox.redevistorias.com.br/erp/orders <br /><br />URL de acesso: https://api.redevistorias.com.br/erp/orders",
+          "summary": "Cadastra um novo pedido de vistoria na API do Rede Vistorias.",
+          "description": "O retorno é o código cadastrado da vistoria, e o preço que será consumido do pacote contratado pelo cliente, em metros quadrados. <br />No caso dos pedidos do tipo saída e conferência, é necessário fazer o upload do pdf da vistoria inicial em nossa plataforma, e informar o nome do arquivo no corpo da mensagem desta requisição.<br />Para fazer o upload, primeiro deve-se utilizar a rota de <a href='#UploadURL'>Upload URL</a>. Com essa rota, é possível fazer upload do arquivo utilizando a URL fornecida. Já no campo file, dentro do previous_inspection, deve-se informar o remote_name (também obtido no request anterior), para que o PDF possa ser localizado. <br />URL de acesso (sandbox): https://api.sandbox.redevistorias.com.br/erp/orders <br /><br />URL de acesso: https://api.redevistorias.com.br/erp/orders",
           "operationId": "addPedido",
           "consumes": [
             "application/json"
@@ -239,7 +295,7 @@
           "tags": [
             "Price Preview"
           ],
-          "summary": "Permite verificar o preço da vistoria.",
+          "summary": "Permite verificar o preço da vistoria. Este preço é o crédito que será consumido do pacote contratado pelo cliente, em metros quadrados.",
           "description": "URL de acesso (sandbox): https://api.sandbox.redevistorias.com.br/erp/price_preview <br /><br />URL de acesso: https://api.redevistorias.com.br/erp/price_preview",
           "operationId": "addPricePreview",
           "consumes": [
@@ -833,7 +889,8 @@
         "required": [
           "details",
           "address",
-          "cost"
+          "cost",
+          "previous_inspection"
         ],
         "properties": {
           "details": {
@@ -850,6 +907,9 @@
           },
           "people": {
             "$ref": "#/definitions/PessoaSaida"
+          },
+          "previous_inspection": {
+            "$ref": "#/definitions/PreviousInspection"
           }
         }
       },
@@ -859,7 +919,8 @@
         "required": [
           "details",
           "address",
-          "cost"
+          "cost",
+          "previous_inspection"
         ],
         "properties": {
           "details": {
@@ -876,6 +937,9 @@
           },
           "people": {
             "$ref": "#/definitions/PessoaConferencia"
+          },
+          "previous_inspection": {
+            "$ref": "#/definitions/PreviousInspection"
           }
         }
       },
@@ -928,14 +992,17 @@
           "properties": {
             "id": {
               "type": "string",
-              "example": "inspector"
+              "example": "houseHunter"
             },
             "title": {
               "type": "string",
-              "example": "Vistoriador"
+              "example": "Captador"
             },
             "content": {
-              "$ref": "#/definitions/Person"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Person"
+              }
             }
           }
       },
@@ -948,10 +1015,13 @@
           },
           "title": {
             "type": "string",
-            "example": "Property Manager"
+            "example": "Administradora"
           },
           "content": {
-            "$ref": "#/definitions/Person"
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Person"
+            }
           }
         }
     },
@@ -964,7 +1034,7 @@
             },
             "title": {
               "type": "string",
-              "example": "Dono"
+              "example": "Locador"
             },
             "content": {
               "type": "array",
@@ -983,7 +1053,7 @@
           },
           "title": {
             "type": "string",
-            "example": "Tenant"
+            "example": "Locatário"
           },
           "content": {
             "type": "array",
@@ -1017,11 +1087,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "example": "owner"
+            "example": "witness"
           },
           "title": {
             "type": "string",
-            "example": "Dono"
+            "example": "Testemunha"
           },
           "content": {
             "type": "array",
@@ -1040,10 +1110,13 @@
           },
           "title": {
             "type": "string",
-            "example": "Real Estate Agency"
+            "example": "Imobiliária"
           },
           "content": {
-            "$ref": "#/definitions/Person"
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Person"
+            }
           }
         }
       },
@@ -1056,10 +1129,13 @@
           },
           "title": {
             "type": "string",
-            "example": "Real Estate Broker"
+            "example": "Corretor"
           },
           "content": {
-            "$ref": "#/definitions/Person"
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Person"
+            }
           }
         }
       },
@@ -1072,11 +1148,11 @@
           },
           "title": {
             "type": "string",
-            "example": "Comprador"
+            "example": "Vendedor"
           },
           "content": {
             "type": "array",
-            "items":{
+            "items": {
               "$ref": "#/definitions/Person"
             }
           }
@@ -1095,7 +1171,7 @@
           },
           "content": {
             "type": "array",
-            "items":{
+            "items": {
               "$ref": "#/definitions/Person"
             }
           }
@@ -1103,98 +1179,50 @@
       },
       "PessoaEntrada": {
         "title": "Pessoa",
-        "type": "object",
-        "properties": {
-            "houseHunter": {
-              "$ref": "#/definitions/HouseHunter"
-            },
-            "propertyManager": {
-              "$ref": "#/definitions/PropertyManager"
-            },
-            "owner": {
-              "$ref": "#/definitions/Owner"  
-            },
-            "tenant": {
-              "$ref": "#/definitions/Tenant"
-            },
-            "guarantor": {
-              "$ref": "#/definitions/Guarantor"
-            },
-            "witness": {
-              "$ref": "#/definitions/Witness"
-          } 
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/HouseHunter",
+          "$ref": "#/definitions/PropertyManager",
+          "$ref": "#/definitions/Owner",
+          "$ref": "#/definitions/Tenant",
+          "$ref": "#/definitions/Guarantor",
+          "$ref": "#/definitions/Witness"
         }
       },
       "PessoaSaida": {
         "title": "Pessoa",
-        "type": "object",
-        "properties": {
-            "houseHunter": {
-              "$ref": "#/definitions/HouseHunter"
-            },
-            "propertyManager": {
-              "$ref": "#/definitions/PropertyManager"
-            },
-            "owner": {
-              "$ref": "#/definitions/Owner"  
-            },
-            "tenant": {
-              "$ref": "#/definitions/Tenant"
-            },
-            "guarantor": {
-              "$ref": "#/definitions/Guarantor"
-            },
-            "witness": {
-              "$ref": "#/definitions/Witness"
-          } 
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/HouseHunter",
+          "$ref": "#/definitions/PropertyManager",
+          "$ref": "#/definitions/Owner",
+          "$ref": "#/definitions/Tenant",
+          "$ref": "#/definitions/Guarantor",
+          "$ref": "#/definitions/Witness"
         }
       },
       "PessoaConferencia": {
         "title": "Pessoa",
-        "type": "object",
-        "properties": {
-            "houseHunter": {
-              "$ref": "#/definitions/HouseHunter"
-            },
-            "propertyManager": {
-              "$ref": "#/definitions/PropertyManager"
-            },
-            "owner": {
-              "$ref": "#/definitions/Owner"  
-            },
-            "tenant": {
-              "$ref": "#/definitions/Tenant"
-            },
-            "guarantor": {
-              "$ref": "#/definitions/Guarantor"
-            },
-            "witness": {
-              "$ref": "#/definitions/Witness"
-          } 
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/HouseHunter",
+          "$ref": "#/definitions/PropertyManager",
+          "$ref": "#/definitions/Owner",
+          "$ref": "#/definitions/Tenant",
+          "$ref": "#/definitions/Guarantor",
+          "$ref": "#/definitions/Witness"
         }
       },
       "PessoaTransferencia": {
         "title": "Pessoa",
-        "type": "object",
-        "properties": {
-          "houseHunter": {
-            "$ref": "#/definitions/HouseHunter"
-          },
-          "realEstateAgency": {
-            "$ref": "#/definitions/RealEstateAgency"
-          },
-          "realEstateBroker": {
-            "$ref": "#/definitions/RealEstateBroker"
-          },
-          "seller": {
-            "$ref": "#/definitions/Seller"
-          },
-          "buyer": {
-            "$ref": "#/definitions/Buyer"
-          },
-          "witness": {
-            "$ref": "#/definitions/Witness"
-          }
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/HouseHunter",
+          "$ref": "#/definitions/RealEstateAgency",
+          "$ref": "#/definitions/RealEstateBRoker",
+          "$ref": "#/definitions/Seller",
+          "$ref": "#/definitions/Buyer",
+          "$ref": "#/definitions/Witness"
         }
       },
       "PricePreview": {
@@ -1393,20 +1421,24 @@
             "type": "string",
             "enum": [
               "api_key"
-            ]
+            ],
+            "in": "formData"
           },
           "client_id": {
             "type": "string",
+            "in": "formData",
             "example": "erpfoo",
             "description": "Identificação do ERP na API da Rede Vistorias, essa informação é fornecida pela equipe da Rede Vistorias no momento da habilitação do ERP."
           },
           "client_secret": {
             "type": "string",
+            "in": "formData",
             "example": "B8WbfvPVX1ic",
             "description": "Senha do ERP na API da Rede Vistorias"
           },
           "api_key": {
             "type": "string",
+            "in": "formData",
             "example": "ZAltqyeoXLlZLR6N9QP0QfyE7asIz65wZ8eBfBDr8o7W4dk9W93beJy0rZleOgQmmkm4jkkW54kv7dxh"
           }
         }
@@ -1426,25 +1458,69 @@
             "example": "client_credentials",
             "enum": [
               "client_credentials"
-            ]
+            ],
+            "in": "formData"
           },
           "client_id": {
             "type": "string",
             "example": "erpfoo",
-            "description": "Identificação do cliente na API do Rede Vistorias."
+            "description": "Identificação do cliente na API do Rede Vistorias.",
+            "in": "formData"
           },
           "client_secret": {
             "type": "string",
             "example": "B8WbfvPVX1ic",
+            "in": "formData",
             "description": "Senha do cliente na API da Rede Vistorias"
           },
           "scope": {
             "type": "string",
             "example": "client:create",
+            "in": "formData",
             "description": "Lista de escopos, separados por um espaço em branco.",
             "enum": [
               "client:create"
             ]
+          }
+        }
+      },
+      "PreviousInspection": {
+        "type": "object",
+        "title": "PreviousInspection",
+        "properties": {
+          "file": {
+            "$ref": "#/definitions/File"
+          },
+          "url": {
+            "$ref": "#/definitions/Url"
+          }
+        }
+      },
+      "Url": {
+        "title": "url",
+              "type": "string",
+              "example": "http://example.com?upload=File.pdf"
+      },
+      "File": {
+        "type": "object",
+        "title": "File",
+        "required": [
+          "remote_name",
+          "original_name",
+          "extension"
+        ],
+        "properties": {
+          "remote_name": {
+            "type": "string",
+            "example": "75300A80-2E79-492F-8B3F-4B6239D1319F/ABD57818-40FE-11E9-A15D-02420A00001D"
+          },
+          "original_name": {
+              "type": "string",
+              "example": "vistoria-inicial"
+          },
+          "extension": {
+            "type": "string",
+            "example": "pdf"
           }
         }
       }
