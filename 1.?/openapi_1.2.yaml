@@ -10,7 +10,7 @@ info:
     As rotas de autenticação, por sua vez, possuem sua própria URL, também possuindo ambientes de produção e sandbox:
     - Produção: https://auth.redevistorias.com.br
     - Sandbox: https://auth.sandbox.redevistorias.com.br
-  version: '1.1'
+  version: '1.2'
   title: Rede Vistorias ERP API
   contact:
     email: ti@redevistorias.com.br
@@ -31,19 +31,19 @@ tags:
       os requests na API da Rede Vistorias.
   - name: Clientes
     description: Integração de novos clientes à API da Rede Vistorias.
-  #- name: Integrações
-  #  description: |
-  #    ![Diagrama de criação do cliente através da API](../images/existing_client.jpg)
+  - name: Integrações
+    description: |
+      ![Diagrama de criação do cliente através da API](../images/existing_client.jpg)
 
-  #    Caso o cliente a ser cadastrado já exista no nosso banco de dados, um aviso
-  #    será retornado, informando que o cliente já existe em nossa base de dados (1.1).
-  #    Assim, será necessário acessar a página de login (2), e, após fazer o login,
-  #    conceder as permissões necessárias (2.1). Feito isso, será retornado um código de
-  #    autorização (2.2). Com este código deverá ser feita uma requisição (3), em nosso
-  #    servidor de autenticação, que retornará o token de autenticação do usuário (3.1).
-  #    Com este token, é possível fazer uma requisição à API da Rede Vistorias, para fazer
-  #    a integração ([4](#operation/addIntegration)), recebendo na resposta a API key, utilizada na geração do token
-  #    de autenticação requerido pelos demais endpoints da API (4.1).
+      Caso o cliente a ser cadastrado já exista no nosso banco de dados, um aviso
+      será retornado, informando que o cliente já existe em nossa base de dados (1.1).
+      Assim, será necessário acessar a página de login (2), e, após fazer o login,
+      conceder as permissões necessárias (2.1). Feito isso, será retornado um código de
+      autorização (2.2). Com este código deverá ser feita uma requisição (3), em nosso
+      servidor de autenticação, que retornará o token de autenticação do usuário (3.1).  
+      Com este token, é possível fazer uma requisição à API da Rede Vistorias, para fazer
+      a integração ([4](#operation/addIntegration)), recebendo na resposta a API key, utilizada na geração do token
+      de autenticação requerido pelos demais endpoints da API (4.1).
   - name: Pedidos
     description: >-
       A API da Rede Vistorias provê uma forma de serviços externos realizarem
@@ -64,7 +64,7 @@ tags:
       finalizado.
   - name: Upload URL
     description: >-
-      A API do Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma,
+      A API do Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma, 
       utilizado quando uma vistoria requer uma anterior (caso das vistorias de saída e conferência),
       podendo ser feito esse upload.
 paths:
@@ -77,11 +77,13 @@ paths:
         ![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)
 
         Esta requisição aceita três tipos de "grant_type":
-        - **api_key**: O token gerado neste tipo de requisição é utilizado para
+        - **api_key**: O token gerado neste tipo de requisição é utilizado para 
         fazer novos pedidos na API (utilizado nas requisições de Pedidos ou
         Price Preview)
         - **client_credentials**: Utilizado para cadastrar novos clientes e
         integrações em nossa API.
+        - **code**: Utilizado para acessar o sistema como sendo o usuário e
+        fazer a integração.
       operationId: generateToken
       servers:
         - url: https://auth.sandbox.redevistorias.com.br/
@@ -93,6 +95,8 @@ paths:
               oneOf:
                 - $ref: '#/components/schemas/APIKeyGrant'
                 - $ref: '#/components/schemas/ClientCredentialsGrant'
+                - $ref: '#/components/schemas/AuthorizationCodeRequest'
+                - $ref: '#/components/schemas/AuthorizationCodeGrant'
         description: Dados do cliente que deverá ser adicionado
         required: true
       responses:
@@ -104,6 +108,8 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/APIKeyResponse'
                   - $ref: '#/components/schemas/ClientCredentialsResponse'
+                  - $ref: '#/components/schemas/CodeResponse'
+                  - $ref: '#/components/schemas/AuthorizationCodeResponse'
         '401':
           description: Unauthorized
   /upload_url:
@@ -114,9 +120,7 @@ paths:
       description: >-
         Utilizando esta rota, é possível conseguir a URL para upload de um arquivo
         na nossa plataforma, associando este arquivo a um remote-name, utilizado por outras
-        rotas. Assim, é possível fazer upload na plataforma da S3, fazendo uma requisição do tipo
-        PUT na URL gerada, e passando o arquivo na requisição. Maiores informações podem ser obtidas
-        na <a href="https://docs.aws.amazon.com/pt_br/AmazonS3/latest/dev/PresignedUrlUploadObject.html" target="_blank">documentação da Amazon</a>.
+        rotas.
       operationId: uploadURL
       parameters:
         - in: header
@@ -133,7 +137,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  remote_name:
+                  remote_name: 
                     type: string
                     example: 75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D
                   url:
@@ -160,7 +164,8 @@ paths:
 
         ![Diagrama de criação do cliente através da API](../images/new_client.jpg)
 
-        <br />Todavia, caso o cliente já exista em nosso banco de dados, um erro de conflito será gerado.
+        Todavia, caso o cliente já exista em nosso banco de dados, uma
+        integração deverá ser feita (ver [Integrações](#tag/Integracoes)).
       operationId: addNaturalPerson
       parameters:
         - in: header
@@ -216,52 +221,50 @@ paths:
           jurídica, é necessário também informar os dados do responsável na
           empresa - seu documento, nome, contato e endereço.
         required: true
-  #/integrations:
-  #  post:
-  #    tags:
-  #      - Integrações
-  #    summary: Cadastra uma nova integração de cliente na API do Rede Vistorias
-  #    description: ''
-  #    operationId: addIntegration
-  #    parameters:
-  #      - in: header
-  #        name: Authorization
-  #        required: true
-  #        example: Bearer eyJ0eXAiOiJKV1QiL...
-  #        schema:
-  #          type: string
-  #    responses:
-  #      '201':
-  #        description: Created
-  #        content:
-  #          application/json:
-  #            schema:
-  #              type: object
-  #              properties:
-  #                api_key:
-  #                  type: string
-  #                  example: edyhudas876...
-  #                  description: API KEY used to get the bearer token
-  #      '400':
-  #        description: Bad request.
-  #      '401':
-  #        description: Unauthorized
-  #      '404':
-  #        description: Client not found
-  #    requestBody:
-  #      content:
-  #        application/json:
-  #          schema:
-  #            $ref: '#/components/schemas/Integration'
-  #      required: true
+  /integrations:
+    post:
+      tags:
+        - Integrações
+      summary: Cadastra uma nova integração de cliente na API do Rede Vistorias
+      description: ''
+      operationId: addIntegration
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
+                    type: string
+                    example: edyhudas876...
+                    description: API KEY used to get the bearer token
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized
+        '404':
+          description: Client not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Integration'
+        required: true
   /orders:
     post:
       tags:
         - Pedidos
-      summary: Cadastra um novo pedido de vistoria na API do Rede Vistorias.
-      description: O retorno é o código cadastrado da vistoria, e o preço que será consumido do pacote contratado pelo cliente, em metros quadrados.<br />
-                  No caso do pedido de saída ou de conferência, deve ser informada a inspeção anterior. Isto pode ser feito de duas formas, fazendo o upload
-                  de um arquivo (ver <a href="#tag/Upload-URL">Upload URL</a>) ou informando um link já existente, que será processado por nossa plataforma.
+      summary: Cadastra um novo pedido de vistoria na API do Rede Vistorias. O retorno é o código cadastrado da vistoria, e o preço que será consumido do pacote contratado pelo cliente, em metros quadrados.
+      description: ""
       operationId: addPedido
       parameters:
         - in: header
@@ -304,8 +307,8 @@ paths:
     post:
       tags:
         - Price Preview
-      summary: Permite verificar o preço da vistoria.
-      description: Este preço é o crédito que será consumido do pacote contratado pelo cliente, em metros quadrados.
+      summary: Permite verificar o preço da vistoria. Este preço é o crédito que será consumido do pacote contratado pelo cliente, em metros quadrados.
+      description: ""
       operationId: addPricePreview
       parameters:
         - in: header
@@ -425,7 +428,7 @@ components:
           type: string
           example: R. Pastor William Richard Schisler Filho
         number:
-          type: string
+          type: integer
           example: 452
         complement:
           type: string
@@ -591,6 +594,10 @@ components:
           type: number
           example: 1400
           description: Valor do aluguel.
+        notes:
+          type: string
+          example: Notas que irão aparecer no relatório
+          description: Observações que irão aparecer no relatório final da vistoria.
     Detail:
       type: object
       required:
@@ -665,10 +672,6 @@ components:
           description: >-
             Informações adicionais importantes ao pedido, por exemplo, local das
             chaves, horário de retirada, etc.
-    Notes:
-        type: string
-        example: Notas que irão aparecer no relatório
-        description: Observações que irão aparecer no relatório final da vistoria.
     FinishedWebhook:
       type: object
       properties:
@@ -757,8 +760,6 @@ components:
           $ref: '#/components/schemas/Cost'
         people:
           $ref: '#/components/schemas/PessoaEntrada'
-        notes:
-          $ref: '#/components/schemas/Notes'
     PedidoSaida:
       title: Saída
       type: object
@@ -780,8 +781,6 @@ components:
           $ref: '#/components/schemas/PessoaSaida'
         previous_inspection:
           $ref: '#/components/schemas/PreviousInspection'
-        notes:
-          $ref: '#/components/schemas/Notes'
     PedidoConferencia:
       title: Conferência
       type: object
@@ -803,8 +802,6 @@ components:
           $ref: '#/components/schemas/PessoaConferencia'
         previous_inspection:
           $ref: '#/components/schemas/PreviousInspection'
-        notes:
-          $ref: '#/components/schemas/Notes'
     PedidoTransferencia:
       title: Transferência
       type: object
@@ -823,8 +820,6 @@ components:
           $ref: '#/components/schemas/Cost'
         people:
           $ref: '#/components/schemas/PessoaTransferencia'
-        notes:
-          $ref: '#/components/schemas/Notes'
     Person:
       type: object
       required:

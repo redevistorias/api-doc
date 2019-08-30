@@ -67,7 +67,7 @@
           }
         }
       },
-      "/authentication/token": {
+      "/token": {
         "post": {
           "tags": [
             "Autenticação"
@@ -76,7 +76,7 @@
           "description": "![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)",
           "operationId": "generateToken",
           "consumes": [
-            "application/json"
+            "application/x-www-form-urlencoded"
           ],
           "produces": [
             "application/json"
