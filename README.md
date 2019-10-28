@@ -20,12 +20,13 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 - Setar o CPF/CNPJ (com pontuação) `rv('document', '<DOCUMENT>')`; (Opcional)
 - Especificar o vistoriador `rv('inspector', '{ name: <NAME>, email: <EMAIL> }')`; (Opcional)
 - Especificar os serviços `rv('services', '[{ service: <SERVICE-NAME>, email: <RESPONSIBLE-EMAIL> }, ...]')`; (Opcional)
-
 - Caso queira, poderá setar um callback para alguns eventos com o método `rv('on', '<EVENT>', function(parameters) { /* ... */ })`; (Opcional)
 - Inicializar usando o ID do elemento adicionado no passo 2 com o método `rv('init')`
 
 #### Exemplos
+
 - Criando um pedido de vistoria
+
 ```
         <!-- ... -->
         <div id="sdk-rv"></div>
@@ -45,7 +46,9 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
     </body>
 </html>
 ```
+
 - Criando uma vistoria de checkout
+
 ```
         <!-- ... -->
         <div id="sdk-rv"></div>
@@ -81,19 +84,18 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 ```
 
 ### Eventos
+
 | Tipo do pedido | Eventos | Parâmetros | Descrição |
 |---|---|---|---|
 | checkout | order.created | `page_url: String` | URL assinada para acesso ao aplicativo para a realização da vistoria.
 | Demais tipos | order.created | `code: String`<br>`price: String` | Executado após a criação de um pedido.
 
----
 ## Zapier
 
 Também possibilitamos a integração pelo Zapier. Com essa integração, o cliente pode solicitar vistorias utilizando um zap que irá enviar as informações para o zap da Rede Vistorias. Essa integração é focada em usuários que já são clientes da Rede Vistorias e possuem uma API Key válida (que pode ser gerada no seu painel de cliente). Além de conseguir solicitar as vistorias pelas actions do zapier, também é possível receber os retornos via triggers
 
 Essa integração é particularmente interessante quando o cliente já utiliza algum aplicativo que tenha integração com o zapier (ex. pipedrive).
 
----
 ## API
 Como forma de integração mais avançada, disponibilizamos uma API que o parceiro pode utilizar para cadastrar cliente e solicitar vistorias. Esta forma de integração permite mais liberdade para personalizar a experiência dos seus usuários, inclusive o fluxo e o design. Porém utilizando essa forma de integração, o parceiro precisará seguir a evolução da API com relação à novas versões quando forem lançadas, ou seja, deverá atualizar sua aplicação cada vez que uma nova funcionalidade for disponibilizada pela Rede Vistorias.
 
