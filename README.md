@@ -27,7 +27,7 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 
 - Criando um pedido de vistoria
 
-```
+```html
         <!-- ... -->
         <div id="sdk-rv"></div>
         <!-- ... -->
@@ -49,7 +49,7 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 
 - Criando uma vistoria de checkout
 
-```
+```html
         <!-- ... -->
         <div id="sdk-rv"></div>
         <!-- ... -->
