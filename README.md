@@ -26,7 +26,7 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 
 #### Exemplos
 - Criando um pedido de vistoria
-```html
+```
         <!-- ... -->
         <div id="sdk-rv"></div>
         <!-- ... -->
@@ -46,7 +46,7 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 </html>
 ```
 - Criando uma vistoria de checkout
-```html
+```
         <!-- ... -->
         <div id="sdk-rv"></div>
         <!-- ... -->
@@ -97,4 +97,4 @@ Essa integração é particularmente interessante quando o cliente já utiliza a
 ## API
 Como forma de integração mais avançada, disponibilizamos uma API que o parceiro pode utilizar para cadastrar cliente e solicitar vistorias. Esta forma de integração permite mais liberdade para personalizar a experiência dos seus usuários, inclusive o fluxo e o design. Porém utilizando essa forma de integração, o parceiro precisará seguir a evolução da API com relação à novas versões quando forem lançadas, ou seja, deverá atualizar sua aplicação cada vez que uma nova funcionalidade for disponibilizada pela Rede Vistorias.
 
-Mais detalhes sobre nossa API, e como funciona essa integração, podem ser encontrados na nossa documentação online em [http://docs.redevistorias.com.br/](http://docs.redevistorias.com.br/)
+Mais detalhes sobre nossa API, e como funciona essa integração, podem ser encontrados na nossa documentação online em [http://docs.redevistorias.com.br/latest](http://docs.redevistorias.com.br/latest)
