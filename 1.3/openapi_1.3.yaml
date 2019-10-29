@@ -51,10 +51,14 @@ tags:
       o cliente serão notificadas por um webhook no endpoint informado no
       momento da geração da API Key. Cada webhook possui um formato específico
       para a ação que ele representa.
-  - name: Price Preview
+  - name: Orçamento
     description: >-
       A API da Rede Vistorias provê uma rota para simular o preço de uma
       vistoria.
+  - name: Recursos
+    description: >-
+      Algumas vistorias possuem recursos extras que podem ser acessado pelo integrador,
+      essa rota possibilita esse acesso.
   - name: Webhook
     description: >-
       O serviço do Rede Vistorias utilizada webhooks para notificar o ERP sobre
@@ -303,7 +307,7 @@ paths:
   /price_preview:
     post:
       tags:
-        - Price Preview
+        - Orçamento
       summary: Permite verificar o preço da vistoria.
       description: Este preço é o crédito que será consumido do pacote contratado pelo cliente, em metros quadrados.
       operationId: addPricePreview
@@ -336,6 +340,43 @@ paths:
             schema:
               $ref: '#/components/schemas/PricePreview'
         required: true
+  /resources:
+    post:
+      tags:
+        - Recursos
+      summary: Acessa recursos fornecidos pela vistoria.
+      operationId: accessOrderResource
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+        - name: infos
+          in: query
+          description: Identificação do recurso que deseja acessar
+          example: 'last_report'
+          required: false
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report:
+                    type: string
+                    example: 'https://relatorio.redevistorias.com.br/.../.pdf'
+                    description: Link para acessar o relatorio
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized
   /acceptedWebhook:
     post:
       tags:
