@@ -107,7 +107,7 @@ paths:
         '401':
           description: Unauthorized
   /upload_url:
-    post:
+    get:
       tags:
         - Upload URL
       summary: Gera uma URL assinada no S3
