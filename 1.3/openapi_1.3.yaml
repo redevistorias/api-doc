@@ -788,7 +788,6 @@ components:
       required:
         - details
         - address
-        - cost
       properties:
         details:
           $ref: '#/components/schemas/Detail'
@@ -810,7 +809,6 @@ components:
       required:
         - details
         - address
-        - cost
         - previous_inspection
       properties:
         details:
@@ -835,7 +833,6 @@ components:
       required:
         - details
         - address
-        - cost
         - previous_inspection
       properties:
         details:
@@ -860,7 +857,6 @@ components:
       required:
         - details
         - address
-        - cost
       properties:
         details:
           $ref: '#/components/schemas/Detail'
