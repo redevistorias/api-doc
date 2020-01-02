@@ -88,7 +88,7 @@ paths:
         - url: https://auth.redevistorias.com.br/
       requestBody:
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/APIKeyGrant'
@@ -99,7 +99,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            application/x-www-form-urlencoded:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/APIKeyResponse'
