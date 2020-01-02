@@ -106,7 +106,7 @@ paths:
                   - $ref: '#/components/schemas/ClientCredentialsResponse'
         '401':
           description: Unauthorized
-  /upload_url:
+  /orders/upload_url:
     get:
       tags:
         - Upload URL
