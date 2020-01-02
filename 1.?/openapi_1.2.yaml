@@ -40,7 +40,7 @@ tags:
       Assim, será necessário acessar a página de login (2), e, após fazer o login,
       conceder as permissões necessárias (2.1). Feito isso, será retornado um código de
       autorização (2.2). Com este código deverá ser feita uma requisição (3), em nosso
-      servidor de autenticação, que retornará o token de autenticação do usuário (3.1).  
+      servidor de autenticação, que retornará o token de autenticação do usuário (3.1).
       Com este token, é possível fazer uma requisição à API da Rede Vistorias, para fazer
       a integração ([4](#operation/addIntegration)), recebendo na resposta a API key, utilizada na geração do token
       de autenticação requerido pelos demais endpoints da API (4.1).
@@ -64,7 +64,7 @@ tags:
       finalizado.
   - name: Upload URL
     description: >-
-      A API do Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma, 
+      A API do Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma,
       utilizado quando uma vistoria requer uma anterior (caso das vistorias de saída e conferência),
       podendo ser feito esse upload.
 paths:
@@ -77,7 +77,7 @@ paths:
         ![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)
 
         Esta requisição aceita três tipos de "grant_type":
-        - **api_key**: O token gerado neste tipo de requisição é utilizado para 
+        - **api_key**: O token gerado neste tipo de requisição é utilizado para
         fazer novos pedidos na API (utilizado nas requisições de Pedidos ou
         Price Preview)
         - **client_credentials**: Utilizado para cadastrar novos clientes e
@@ -90,7 +90,7 @@ paths:
         - url: https://auth.redevistorias.com.br/
       requestBody:
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/APIKeyGrant'
@@ -103,7 +103,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            application/x-www-form-urlencoded:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/APIKeyResponse'
@@ -113,7 +113,7 @@ paths:
         '401':
           description: Unauthorized
   /upload_url:
-    post:
+    get:
       tags:
         - Upload URL
       summary: Gera uma URL assinada no S3
@@ -137,7 +137,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  remote_name: 
+                  remote_name:
                     type: string
                     example: 75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D
                   url:
@@ -748,7 +748,6 @@ components:
       required:
         - details
         - address
-        - cost
       properties:
         details:
           $ref: '#/components/schemas/Detail'
@@ -766,7 +765,6 @@ components:
       required:
         - details
         - address
-        - cost
         - previous_inspection
       properties:
         details:
@@ -787,7 +785,6 @@ components:
       required:
         - details
         - address
-        - cost
         - previous_inspection
       properties:
         details:
@@ -808,7 +805,6 @@ components:
       required:
         - details
         - address
-        - cost
       properties:
         details:
           $ref: '#/components/schemas/Detail'

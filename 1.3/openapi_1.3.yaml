@@ -92,7 +92,7 @@ paths:
         - url: https://auth.redevistorias.com.br/
       requestBody:
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
               oneOf:
                 - $ref: '#/components/schemas/APIKeyGrant'
@@ -103,7 +103,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            application/x-www-form-urlencoded:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/APIKeyResponse'
@@ -111,7 +111,7 @@ paths:
         '401':
           description: Unauthorized
   /upload_url:
-    post:
+    get:
       tags:
         - Upload URL
       summary: Gera uma URL assinada no S3
@@ -788,7 +788,6 @@ components:
       required:
         - details
         - address
-        - cost
       properties:
         details:
           $ref: '#/components/schemas/Detail'
@@ -810,7 +809,6 @@ components:
       required:
         - details
         - address
-        - cost
         - previous_inspection
       properties:
         details:
@@ -835,7 +833,6 @@ components:
       required:
         - details
         - address
-        - cost
         - previous_inspection
       properties:
         details:
@@ -860,7 +857,6 @@ components:
       required:
         - details
         - address
-        - cost
       properties:
         details:
           $ref: '#/components/schemas/Detail'
