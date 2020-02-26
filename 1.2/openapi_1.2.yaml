@@ -1104,7 +1104,7 @@ components:
           type: string
           example: Relatório de vistoria
           description: Nome do relatório
-        withPcitures:
+        withPictures:
           type: boolean
           example: true
           description: Informa se o relatório possui imagens.

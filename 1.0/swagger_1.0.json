@@ -890,7 +890,7 @@
               "$ref": "#/definitions/PropertyManager"
             },
             "owner": {
-              "$ref": "#/definitions/Owner"  
+              "$ref": "#/definitions/Owner"
             },
             "tenant": {
               "$ref": "#/definitions/Tenant"
@@ -900,7 +900,7 @@
             },
             "witness": {
               "$ref": "#/definitions/Witness"
-          } 
+          }
         }
       },
       "PessoaSaida": {
@@ -914,7 +914,7 @@
               "$ref": "#/definitions/PropertyManager"
             },
             "owner": {
-              "$ref": "#/definitions/Owner"  
+              "$ref": "#/definitions/Owner"
             },
             "tenant": {
               "$ref": "#/definitions/Tenant"
@@ -924,7 +924,7 @@
             },
             "witness": {
               "$ref": "#/definitions/Witness"
-          } 
+          }
         }
       },
       "PessoaConferencia": {
@@ -938,7 +938,7 @@
               "$ref": "#/definitions/PropertyManager"
             },
             "owner": {
-              "$ref": "#/definitions/Owner"  
+              "$ref": "#/definitions/Owner"
             },
             "tenant": {
               "$ref": "#/definitions/Tenant"
@@ -948,7 +948,7 @@
             },
             "witness": {
               "$ref": "#/definitions/Witness"
-          } 
+          }
         }
       },
       "PessoaTransferencia": {
@@ -1084,7 +1084,7 @@
             "example": "Relatório de vistoria",
             "description": "Nome do relatório"
           },
-          "withPcitures": {
+          "withPictures": {
             "type": "boolean",
             "example": true,
             "description": "Informa se o relatório possui imagens."
