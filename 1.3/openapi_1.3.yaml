@@ -1438,8 +1438,8 @@ components:
           description: Identificação do imóvel.
         observation:
           type: string
-          example: Endereço não tem cobertura do serviço
-          description: Razão da recusa
+          example: O responsável pelo acompanhamento da vistoria não foi encontrado ou não pôde comparecer
+          description: Razão do cancelamento
         trace_data:
           $ref: '#/components/schemas/TraceData'
     DivergenceWebhook:
