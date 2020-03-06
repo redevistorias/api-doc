@@ -1471,7 +1471,7 @@ components:
           description: Código do pedido
         status:
           type: string
-          example: REJECTED
+          example: CANCELLED
           description: Estado do pedido
         building_id:
           type: string
@@ -1492,7 +1492,7 @@ components:
           description: Código do pedido
         status:
           type: string
-          example: REJECTED
+          example: DIVERGENCE
           description: Estado do pedido
         building_id:
           type: string
