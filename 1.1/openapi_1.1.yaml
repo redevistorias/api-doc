@@ -904,7 +904,7 @@ components:
       properties:
         id:
           type: string
-          example: owner
+          example: witness
         title:
           type: string
           example: Testemunha
