@@ -4,11 +4,11 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 
 ## Formulario web
 
-É a versão mais simplificada de integração, permitindo que o parceiro faça a integração com a Rede Vistorias com poucas alterações em seu software. 
+É a versão mais simplificada de integração, permitindo que o parceiro faça a integração com a Rede Vistorias com poucas alterações em seu software.
 
 
 - **Design pronto e customizável.** Fornecemos um formulário com design e front-end prontos para uso, dessa forma você não se preocupa com esses detalhes.
-- **Não se preocupe com o fluxo.** Nós cuidamos de todo o fluxo do pedido, você só deve adicionar nosso código no seu front-end. 
+- **Não se preocupe com o fluxo.** Nós cuidamos de todo o fluxo do pedido, você só deve adicionar nosso código no seu front-end.
 - **Atualizações automáticas.** Seus usuário sempre terão acesso as atualizações assim que forem disponibilizadas, não havendo a necessidade de alterações no seu software. Além disso os usuário terão acesso ao fruto de um processo contínuo de aperfeiçoamento.
 
 ### Como usar?
@@ -18,6 +18,7 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
 - Setar o nome do parceiro com o método `rv('partner', '<PARTNER-NAME>')`;
 - Especificar o tipo do pedido `rv('orderType', '<ORDER-TYPE>')`; (Opcional)
 - Setar o CPF/CNPJ (com pontuação) `rv('document', '<DOCUMENT>')`; (Opcional)
+- Setar um webhook `rv('webhook', '<URL>')`; (Opcional)
 - Especificar o vistoriador `rv('inspector', '{ name: <NAME>, email: <EMAIL> }')`; (Opcional)
 - Especificar os serviços `rv('services', '[{ service: <SERVICE-NAME>, email: <RESPONSIBLE-EMAIL> }, ...]')`; (Opcional)
 - Caso queira, poderá setar um callback para alguns eventos com o método `rv('on', '<EVENT>', function(parameters) { /* ... */ })`; (Opcional)
@@ -39,6 +40,7 @@ Como forma de integrar os serviços da Rede Vistorias com parceiros externos, cr
             }(window,document,'script','https://integration.redevistorias.com.br/js/app.js');
             rv('partner', 'Parceiro');
             rv('document', '111.111.111-11');
+            rv('webhook', 'https://www.example.com/webhook');
             rv('orderType', 'entrada');
             rv('on', 'order.created', function(code, price) { /* ... */ });
             rv('init', 'sdk-rv');
