@@ -1408,11 +1408,6 @@ components:
             $ref: '#/components/schemas/File'
           url:
             $ref: '#/components/schemas/Url'
-          code:
-            type: string
-            example: PVLE.012.01710
-            description: Código do pedido de entrada (deve estar finalizado) que será base para o pedido de saída<br />
-                        Obs. Esta informação deve ser fornecida caso não se utilize o arquivo para criação do pedido
     File:
       type: object
       title: File
