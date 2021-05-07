@@ -10,7 +10,7 @@ info:
     As rotas de autenticação, por sua vez, possuem sua própria URL, também possuindo ambientes de produção e sandbox:
     - Produção: https://auth.redevistorias.com.br
     - Sandbox: https://auth.sandbox.redevistorias.com.br
-  version: '1.2'
+  version: '1.3'
   title: Rede Vistorias ERP API
   contact:
     email: ti@redevistorias.com.br
