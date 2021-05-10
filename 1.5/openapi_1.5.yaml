@@ -468,6 +468,23 @@ paths:
             schema:
               $ref: '#/components/schemas/DivergenceWebhook'
         required: true
+  /assignedWebhook:
+    post:
+      tags:
+        - Webhook
+      summary: Assigned Webhook
+      description: >-
+        Este webhook é executado quando se atribui um vistoriador ao pedido de vistoria, somente após o pedido tr sido aceito.
+      operationId: assignedWebhook
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignedWebhook'
+        required: true
   /franchisees:
     get:
       tags:
@@ -1559,3 +1576,37 @@ components:
           $ref: '#/components/schemas/TraceData'
         divergence:
           $ref: '#/components/schemas/Divergence'
+    AssignedWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: ASSIGNED
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        inspector:
+          $ref: '#/components/schemas/Inspector'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+    Inspector:
+      type: object
+      properties:
+        rg:
+          type: string
+          example: 1234567 SSP SC
+          description: Número de registro e órgão emissor
+        cpf:
+          type: string
+          example: 111.111.111-00
+          description: Número do Cadastro de Pessoa Física
+        name:
+          type: string
+          example: José da Silva
+          description: Nome do vistoriador
