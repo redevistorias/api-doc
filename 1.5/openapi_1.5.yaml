@@ -62,9 +62,9 @@ tags:
   - name: Webhook
     description: >-
       O serviço do Rede Vistorias utiliza webhooks para notificar a ferramenta de integração utilizada pelo cliente sobre
-      mudanças do estado do pedido realizado. Esse webhook deve ter caráter público) e é informado pelo
+      mudanças do estado do pedido realizado. Esse webhook deve ter caráter público e é informado pelo
       usuário do sistema no momento de criação da integração. Os eventos
-      existentes são emitidos sempre para a mesma URL seguindo o fluxo do pedido quando é aprovado, rejeitado ou
+      existentes são emitidos sempre para a mesma URL seguindo o fluxo do pedido quando é aprovado, rejeitado, atribuído ou
       finalizado.
   - name: Upload URL
     description: >-
@@ -474,7 +474,7 @@ paths:
         - Webhook
       summary: Assigned Webhook
       description: >-
-        Este webhook é executado quando se atribui um vistoriador ao pedido de vistoria, somente após o pedido tr sido aceito.
+        Este webhook é executado quando se atribui um vistoriador ao pedido de vistoria, somente após o pedido ter sido aceito.
       operationId: assignedWebhook
       responses:
         '200':
