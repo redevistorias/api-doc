@@ -509,10 +509,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  remote_name:
+                  id:
                     type: integer
                     example: 12
-                  url:
+                  name:
                     type: string
                     example: Unidade Rede Vistorias
         '400':
