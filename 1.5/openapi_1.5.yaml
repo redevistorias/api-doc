@@ -811,6 +811,7 @@ components:
           example: 12
           description: >-
             Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+            Essa key não deve ser informada caso não haja uma unidade (franchisee_id)
     Notes:
         type: string
         example: Notas que irão aparecer no relatório
