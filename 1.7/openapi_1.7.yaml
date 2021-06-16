@@ -1532,6 +1532,7 @@ components:
         code:
           type: string
           example: RVPROMO123
+          description: Código de indicação
 x-webhooks:
   acceptedWebhook:
     post:
