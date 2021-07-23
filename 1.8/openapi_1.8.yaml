@@ -685,7 +685,7 @@ components:
           type: string
           example: 'https://vistori.as/VLE98700125'
           description: >-
-            URL do hotiste onde o cliente poderá executar ações sobre este
+            URL do hotsite onde o cliente poderá executar ações sobre este
             pedido.
         reports:
           type: array
