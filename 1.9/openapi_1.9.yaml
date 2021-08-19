@@ -621,6 +621,7 @@ components:
             - saida
             - transferencia
             - conferencia
+          description: Esta informação deve ser alterada de acordo com o pedido que será aberto
         purpose:
           type: string
           example: Residencial
@@ -765,6 +766,8 @@ components:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     PedidoSaida:
       title: Saída
       type: object
@@ -795,6 +798,8 @@ components:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     PedidoConferencia:
       title: Conferência
       type: object
@@ -825,6 +830,8 @@ components:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     PedidoTransferencia:
       title: Transferência
       type: object
@@ -852,6 +859,8 @@ components:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     Person:
       type: object
       required:
@@ -1487,6 +1496,17 @@ components:
           type: string
           example: José da Silva
           description: Nome do vistoriador
+    OrderResponsible:
+      type: object
+      properties:
+        name:
+          type: string
+          example: José da Silva
+          description: Nome do responsável pelo pedido
+        email:
+          type: string
+          example: jose.silva@email.com
+          description: E-mail do responsável pelo pedido
     Webhook:
       type: object
       discriminator:
