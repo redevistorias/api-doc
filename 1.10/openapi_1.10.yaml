@@ -1,0 +1,1765 @@
+openapi: 3.0.0
+info:
+  description: |
+    Esta é a documentação oficial da API pública da Rede Vistorias.
+
+    Além do ambiente de produção, oferecemos um ambiente de testes (sandbox):
+    - Produção: https://api.redevistorias.com.br/erp
+    - Sandbox: https://api.sandbox.redevistorias.com.br/erp
+
+    As rotas de autenticação, por sua vez, possuem sua própria URL, também possuindo ambientes de produção e sandbox:
+    - Produção: https://auth.redevistorias.com.br
+    - Sandbox: https://auth.sandbox.redevistorias.com.br
+  version: '1.10'
+  title: Rede Vistorias ERP API
+  contact:
+    email: ti@redevistorias.com.br
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: https://api.sandbox.redevistorias.com.br/erp
+  - url: https://api.redevistorias.com.br/erp
+
+tags:
+  - name: Autenticação
+    description: >-
+      Para a integração de um serviço externo com a API da Rede Vistorias é
+      necessária a utilização de uma API Key fornecida pelo usuário (ou
+      adquirida no cadastro do cliente). Possuindo uma API Key é possível gerar
+      um 'Bearer token' com validade de 1 dia. Este token é obrigatório em todos
+      os requests na API da Rede Vistorias.
+  - name: Clientes
+    description: Integração de novos clientes à API da Rede Vistorias.
+  - name: Pedidos
+    description: >-
+      A API da Rede Vistorias provê uma forma de serviços externos realizarem
+      pedidos de vistorias. Todas alterações no pedido que sejam relevantes para
+      o cliente serão notificadas por um webhook no endpoint informado no
+      momento da geração da API Key. Cada webhook possui um formato específico
+      para a ação que ele representa.
+  - name: Orçamento
+    description: >-
+      A API da Rede Vistorias provê uma rota para simular o preço de uma
+      vistoria.
+  - name: Recursos
+    description: >-
+      Algumas vistorias possuem recursos extras que podem ser acessado pelo integrador,
+      essa rota possibilita esse acesso.
+  - name: Webhook
+    description: >-
+      O serviço do Rede Vistorias utiliza webhooks para notificar a ferramenta de integração utilizada pelo cliente sobre
+      mudanças do estado do pedido realizado. Esse webhook deve ter caráter público e é informado pelo
+      usuário do sistema no momento de criação da integração. Os eventos
+      existentes são emitidos sempre para a mesma URL seguindo o fluxo do pedido quando é aprovado, rejeitado, atribuído ou
+      finalizado.
+  - name: Upload URL
+    description: >-
+      A API do Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma,
+      utilizado quando uma vistoria requer uma anterior (caso das vistorias de saída e conferência),
+      podendo ser feito esse upload.
+  - name: Unidades
+    description: >-
+      A API da Rede Vistorias provê uma rota para recuperar as unidades com as quais o cliente possui vínculo.
+      Esta informação (valor inteiro e que, na listagem, se chama "id") deverá ser utilizada na geração de pedido, caso queira identificar 
+      a qual unidade aquele pedido pertencerá (franchisee_id).
+paths:
+  /token:
+    post:
+      tags:
+        - Autenticação
+      summary: Gera o token de acesso
+      description: |
+        ![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)
+
+        Esta requisição aceita três tipos de "grant_type":
+        - **api_key**: O token gerado neste tipo de requisição é utilizado para
+        fazer novos pedidos na API (utilizado nas requisições de Pedidos ou
+        Price Preview)
+        - **client_credentials**: Utilizado para cadastrar novos clientes e
+        integrações em nossa API.
+      operationId: generateToken
+      servers:
+        - url: https://auth.sandbox.redevistorias.com.br/
+        - url: https://auth.redevistorias.com.br/
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/APIKeyGrant'
+                - $ref: '#/components/schemas/ClientCredentialsGrant'
+        description: Dados do cliente que deverá ser adicionado
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/APIKeyResponse'
+                  - $ref: '#/components/schemas/ClientCredentialsResponse'
+        '401':
+          description: Unauthorized
+  /orders/upload_url:
+    get:
+      tags:
+        - Upload URL
+      summary: Gera uma URL assinada no S3
+      description: >-
+        Utilizando esta rota, é possível conseguir a URL para upload de um arquivo
+        na nossa plataforma, associando este arquivo a um remote-name, utilizado por outras
+        rotas. Assim, é possível fazer upload na plataforma da S3, fazendo uma requisição do tipo
+        PUT na URL gerada, e passando o arquivo na requisição. Maiores informações podem ser obtidas
+        na <a href="https://docs.aws.amazon.com/pt_br/AmazonS3/latest/dev/PresignedUrlUploadObject.html" target="_blank">documentação da Amazon</a>.
+      operationId: uploadURL
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remote_name:
+                    type: string
+                    example: 75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D
+                  url:
+                    type: string
+                    example: https:\/\/s3.amazonaws.com\/upload.dev.redevistorias.com.br\/75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D?...
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error trying to generate the signed URL. If this problem persists, please inform the administrator"
+  /clients:
+    post:
+      tags:
+        - Clientes
+      summary: Cadastra um novo cliente na API do Rede Vistorias
+      description: >-
+        Novos clientes podem ser cadastrados diretamente pela API disponibilizada
+        pela Rede Vistorias, passando os dados informados abaixo.
+
+        ![Diagrama de criação do cliente através da API](../images/new_client.jpg)
+
+        <br />Todavia, caso o cliente já exista em nosso banco de dados, um erro de conflito será gerado.
+      operationId: addNaturalPerson
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
+                    type: string
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '409':
+          description: Already existing client
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_domain:
+                    type: string
+                    example: 'https://auth.redevistorias.com.br/token'
+                    description: >-
+                      Pagina do servidor de autorização onde o usuário irá
+                      permitir o acesso aos seus dados.
+                  auth_scopes:
+                    type: string
+                    example: 'order:* financial:view'
+                    description: >-
+                      Lista de escopos que deve ser enviado para o servidor de
+                      autorização.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ClientPessoaFisica'
+                - $ref: '#/components/schemas/ClientPessoaJuridica'
+        description: >-
+          A API da Rede Vistorias provê uma forma de serviços externos adicionar
+          novos clientes no sistema. Este cliente pode ser tanto uma pessoa
+          física quanto uma pessoa jurídica. No caso do cliente ser pessoa
+          jurídica, é necessário também informar os dados do responsável na
+          empresa - seu documento, nome, contato e endereço.
+        required: true
+  /orders:
+    post:
+      tags:
+        - Pedidos
+      summary: Cadastra um novo pedido de vistoria na API do Rede Vistorias.
+      description: O retorno é o código cadastrado da vistoria, e o preço que será consumido do pacote contratado pelo cliente, em metros quadrados.<br />
+                  No caso do pedido de saída ou de conferência, deve ser informada a inspeção anterior. Isto pode ser feito de duas formas, fazendo o upload
+                  de um arquivo (ver <a href="#tag/Upload-URL">Upload URL</a>) ou informando um link já existente, que será processado por nossa plataforma.
+      operationId: addPedido
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: VLE.987.00125
+                    description: Código de identificação da vistoria.
+                  price:
+                    type: string
+                    example: '85.50'
+                    description: Preço a pagar pela vistoria.
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/PedidoEntrada'
+                - $ref: '#/components/schemas/PedidoSaida'
+                - $ref: '#/components/schemas/PedidoConferencia'
+                - $ref: '#/components/schemas/PedidoTransferencia'
+                - $ref: '#/components/schemas/PedidoFotosCaptacao'
+        required: true
+  /price_preview:
+    post:
+      tags:
+        - Orçamento
+      summary: Permite verificar o preço da vistoria.
+      description: Este preço é o crédito que será consumido do pacote contratado pelo cliente, em metros quadrados.
+      operationId: addPricePreview
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  price:
+                    type: string
+                    example: '85.50'
+                    description: O preço da vistoria.
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricePreview'
+        required: true
+  /resources:
+    post:
+      tags:
+        - Recursos
+      summary: Acessa recursos fornecidos pela vistoria.
+      operationId: accessOrderResource
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+        - name: infos
+          in: query
+          description: Identificação do recurso que deseja acessar
+          example: 'last_report'
+          required: false
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report:
+                    type: string
+                    example: 'https://relatorio.redevistorias.com.br/.../.pdf'
+                    description: Link para acessar o relatorio
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized
+  /franchisees:
+    get:
+      tags:
+        - Unidades
+      summary: Recebe uma lista das unidades com as quais o cliente possui vínculo
+      description: >-
+        O retorno é uma lista de unidades, contendo os params "id" e "name", de forma a facilitar a identificação 
+        de qual unidade se deseja inserir no pedido.
+      operationId: getFranchisees
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          example: Bearer eyJ0eXAiOiJKV1QiL...
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 12
+                  name:
+                    type: string
+                    example: Unidade Rede Vistorias
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Couldn't find franchisees"
+components:
+  schemas:
+    AcceptedWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: ACCEPTED
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        price:
+          type: string
+          example: '75.00'
+          description: Preço temporário
+        observation:
+          type: string
+          example: As chaves serão retiradas na imobiliária às 14h do dia 22.
+          description: Observações sobre o pedido
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+    Address:
+      type: object
+      required:
+        - street
+        - number
+        - zipcode
+        - neighborhood
+        - city
+        - state
+      properties:
+        street:
+          type: string
+          example: R. Pastor William Richard Schisler Filho
+        number:
+          type: string
+          example: '452'
+        complement:
+          type: string
+          example: Sala 3
+        zipcode:
+          type: string
+          example: 88034-100
+        neighborhood:
+          type: string
+          example: Itacorubi
+        city:
+          type: string
+          example: Florianópolis
+        state:
+          type: string
+          example: SC
+          enum:
+            - AC
+            - AL
+            - AP
+            - AM
+            - BA
+            - CE
+            - DF
+            - ES
+            - GO
+            - MA
+            - MT
+            - MS
+            - MG
+            - PA
+            - PB
+            - PR
+            - PE
+            - PI
+            - RJ
+            - RN
+            - RS
+            - RO
+            - RR
+            - SC
+            - SP
+            - SE
+            - TO
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+    ClientPessoaFisica:
+      title: Pessoa Física
+      type: object
+      required:
+        - client_type
+        - document
+        - name
+        - email
+        - phone
+        - address
+        - hooks
+      properties:
+        client_type:
+          type: string
+          example: pf
+          description: pf para Pessoa Física
+        document:
+          type: string
+          example: 000.000.999-99
+          description: 'Identificador do cliente, CPF para pessoas físicas.'
+        name:
+          type: string
+          example: Novo Usuário
+          description: 'Nome completo do usuário, em caso de pessoa física.'
+        cellphone:
+          type: string
+          example: (48) 99999-9999
+          description: 'Telefone celular do usuário, se houver.'
+        phone:
+          type: string
+          example: (48) 3000-0000
+          description: Telefone do usuário.
+        email:
+          type: string
+          example: ti@redevistorias.com.br
+          description: Email do usuário.
+        website:
+          type: string
+          example: 'http://redevistorias.com.br'
+          description: 'Site do cliente, se houver.'
+        address:
+          $ref: '#/components/schemas/Address'
+        hooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hook'
+    ClientPessoaJuridica:
+      title: Pessoa Jurídica
+      type: object
+      required:
+        - client_type
+        - document
+        - name
+        - email
+        - phone
+        - address
+        - responsible
+      properties:
+        client_type:
+          type: string
+          example: pj
+          description: pj para Pessoa Jurídica
+        document:
+          type: string
+          example: 00.111.333/1000-98
+          description: 'Identificador do cliente: CNPJ, para pessoas jurídicas.'
+        name:
+          type: string
+          example: Novo Usuário
+          description: 'Razão social, no caso de pessoa jurídica.'
+        cellphone:
+          type: string
+          example: (48) 99999-9999
+          description: 'Telefone celular do usuário, se houver.'
+        phone:
+          type: string
+          example: (48) 3000-0000
+          description: Telefone do usuário.
+        email:
+          type: string
+          example: ti@redevistorias.com.br
+          description: Email do usuário.
+        website:
+          type: string
+          example: 'http://redevistorias.com.br'
+          description: 'Site do cliente, se houver.'
+        address:
+          $ref: '#/components/schemas/Address'
+        responsible:
+          $ref: '#/components/schemas/Responsible'
+        hooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hook'
+    Cost:
+      type: object
+      properties:
+        condominium:
+          type: number
+          example: 330
+          description: Valor do condomínio.
+        iptu:
+          type: number
+          example: 267.9
+          description: Valor do IPTU.
+        rent:
+          type: number
+          example: 1400
+          description: Valor do aluguel.
+    Detail:
+      type: object
+      required:
+        - building_id
+        - building_type
+        - area
+        - inspection_type
+        - furnished
+        - modality
+        - express
+      properties:
+        building_id:
+          type: string
+          maxLength: 30
+          example: Ed. Itacoru II - Bl 8 Apt 301
+          description: Identificação do imóvel.
+        building_type:
+          type: string
+          example: Casa
+          enum:
+            - Apartamento
+            - Casa
+            - Galpão
+            - Garagem
+            - Kitinete
+            - Loft
+            - Loja
+            - Prédio
+            - Sala
+            - Duplex
+            - Terreno
+        area:
+          type: float
+          example: 345
+          description: Área total do imóvel.
+        inspection_type:
+          type: string
+          example: entrada
+          enum:
+            - entrada
+            - saida
+            - transferencia
+            - conferencia
+          description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+        purpose:
+          type: string
+          example: Residencial
+          enum:
+            - Residencial
+            - Comercial
+            - Galpão
+        furnished:
+          type: string
+          example: unfurnished
+          enum:
+            - furnished
+            - semi-furnished
+            - unfurnished
+        modality:
+          type: string
+          example: premium
+          description: Modalidade do pedido.
+          enum:
+            - standard
+            - premium
+        express:
+          type: boolean
+          example: true
+          description: Opção por vistoria express.
+        details:
+          type: string
+          example: 'Retirar as chaves às 14:00.'
+          description: >-
+            Informações adicionais importantes ao pedido, por exemplo, local das
+            chaves, horário de retirada, etc.
+        franchisee_id:
+          type: integer
+          example: 12
+          description: >-
+            Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+            Essa key não deve ser informada caso não haja uma unidade (franchisee_id)
+    Notes:
+        type: string
+        example: Notas que irão aparecer no relatório
+        description: Observações que irão aparecer no relatório final da vistoria.
+    FinishedWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: FINISHED
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        price:
+          type: string
+          example: '75.00'
+          description: Preço final.
+        page_url:
+          type: string
+          example: 'https://vistori.as/VLE98700125'
+          description: >-
+            URL do hotsite onde o cliente poderá executar ações sobre este
+            pedido.
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        observation:
+          type: string
+          example: Detalhes informados pela RV
+          description: O campo vai retornar detalhes informados pela RV
+    Integration:
+      type: object
+      required:
+        - client
+        - hooks
+      properties:
+        client:
+          type: string
+          example: Teste
+          description: Username do cliente
+        hooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hook'
+    Hook:
+      type: object
+      properties:
+        type:
+          type: string
+          example: webhook
+          enum:
+            - webhook
+        url:
+          type: string
+          example: 'https://seu.erp.com.br/hook'
+          description: URL do endpoint que receberá o webhook com as atualizações do pedido.
+    Key:
+      type: object
+      properties:
+        simple:
+          type: integer
+          example: 2
+          description: Quantidade de chaves simples existentes para esse imóvel.
+        foursided:
+          type: integer
+          example: 4
+          description: Quantidade de chaves "tetra" existentes para esse imóvel.
+        others:
+          type: string
+          example: 1 controle remoto
+          description: Quantidade de outros tipos de chaves existentes para esse imóvel.
+    PedidoEntrada:
+      title: Entrada
+      type: object
+      required:
+        - details
+        - address
+      properties:
+        details:
+          $ref: '#/components/schemas/Detail'
+        address:
+          $ref: '#/components/schemas/Address'
+        keys:
+          $ref: '#/components/schemas/Key'
+        cost:
+          $ref: '#/components/schemas/Cost'
+        people:
+          $ref: '#/components/schemas/PessoaEntrada'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        notes:
+          $ref: '#/components/schemas/Notes'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    PedidoSaida:
+      title: Saída
+      type: object
+      required:
+        - details
+        - address
+        - previous_inspection
+      properties:
+        details:
+          $ref: '#/components/schemas/Detail'
+        address:
+          $ref: '#/components/schemas/Address'
+        keys:
+          $ref: '#/components/schemas/Key'
+        cost:
+          $ref: '#/components/schemas/Cost'
+        people:
+          $ref: '#/components/schemas/PessoaSaida'
+        previous_inspection:
+          $ref: '#/components/schemas/PreviousInspection'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        notes:
+          $ref: '#/components/schemas/Notes'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    PedidoConferencia:
+      title: Conferência
+      type: object
+      required:
+        - details
+        - address
+        - previous_inspection
+      properties:
+        details:
+          $ref: '#/components/schemas/Detail'
+        address:
+          $ref: '#/components/schemas/Address'
+        keys:
+          $ref: '#/components/schemas/Key'
+        cost:
+          $ref: '#/components/schemas/Cost'
+        people:
+          $ref: '#/components/schemas/PessoaConferencia'
+        previous_inspection:
+          $ref: '#/components/schemas/PreviousInspection'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        notes:
+          $ref: '#/components/schemas/Notes'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    PedidoTransferencia:
+      title: Transferência
+      type: object
+      required:
+        - details
+        - address
+      properties:
+        details:
+          $ref: '#/components/schemas/Detail'
+        address:
+          $ref: '#/components/schemas/Address'
+        keys:
+          $ref: '#/components/schemas/Key'
+        cost:
+          $ref: '#/components/schemas/Cost'
+        people:
+          $ref: '#/components/schemas/PessoaTransferencia'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        notes:
+          $ref: '#/components/schemas/Notes'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    Person:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Maísa Senna
+          description: Nome da pessoa
+        signature:
+          type: boolean
+          example: true
+          description: Campo que indica se a assinatura é requerida
+    HouseHunter:
+      type: object
+      properties:
+        id:
+          type: string
+          example: houseHunter
+        title:
+          type: string
+          example: Captador
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    PropertyManager:
+      type: object
+      properties:
+        id:
+          type: string
+          example: propertyManager
+        title:
+          type: string
+          example: Administradora
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    Owner:
+      type: object
+      properties:
+        id:
+          type: string
+          example: owner
+        title:
+          type: string
+          example: Locador
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tenant
+        title:
+          type: string
+          example: Locatário
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    Guarantor:
+      type: object
+      properties:
+        id:
+          type: string
+          example: guarantor
+        title:
+          type: string
+          example: Fiador
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    Witness:
+      type: object
+      properties:
+        id:
+          type: string
+          example: witness
+        title:
+          type: string
+          example: Testemunha
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    RealEstateAgency:
+      type: object
+      properties:
+        id:
+          type: string
+          example: realEstateAgency
+        title:
+          type: string
+          example: Imobiliária
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    RealEstateBroker:
+      type: object
+      properties:
+        id:
+          type: string
+          example: realEstateBroker
+        title:
+          type: string
+          example: Corretor
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    Seller:
+      type: object
+      properties:
+        id:
+          type: string
+          example: seller
+        title:
+          type: string
+          example: Vendedor
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    Buyer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: buyer
+        title:
+          type: string
+          example: Comprador
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+    PessoaEntrada:
+      title: Pessoa
+      type: array
+      items:
+        - $ref: '#/components/schemas/HouseHunter'
+        - $ref: '#/components/schemas/PropertyManager'
+        - $ref: '#/components/schemas/Owner'
+        - $ref: '#/components/schemas/Tenant'
+        - $ref: '#/components/schemas/Guarantor'
+        - $ref: '#/components/schemas/Witness'
+    PessoaSaida:
+      title: Pessoa
+      type: array
+      items:
+        - $ref: '#/components/schemas/HouseHunter'
+        - $ref: '#/components/schemas/PropertyManager'
+        - $ref: '#/components/schemas/Owner'
+        - $ref: '#/components/schemas/Tenant'
+        - $ref: '#/components/schemas/Guarantor'
+        - $ref: '#/components/schemas/Witness'
+    PessoaConferencia:
+      title: Pessoa
+      type: array
+      items:
+        - $ref: '#/components/schemas/HouseHunter'
+        - $ref: '#/components/schemas/PropertyManager'
+        - $ref: '#/components/schemas/Owner'
+        - $ref: '#/components/schemas/Tenant'
+        - $ref: '#/components/schemas/Guarantor'
+        - $ref: '#/components/schemas/Witness'
+    PessoaTransferencia:
+      title: Pessoa
+      type: array
+      items:
+        - $ref: '#/components/schemas/HouseHunter'
+        - $ref: '#/components/schemas/RealEstateAgency'
+        - $ref: '#/components/schemas/RealEstateBroker'
+        - $ref: '#/components/schemas/Seller'
+        - $ref: '#/components/schemas/Buyer'
+        - $ref: '#/components/schemas/Witness'
+    PricePreview:
+      type: object
+      required:
+        - inspection_type
+        - building_type
+        - area
+        - furnished
+        - modality
+        - express
+      properties:
+        inspection_type:
+          type: string
+          example: entrada
+          description: Tipo de vistoria que deve ser executada
+          enum:
+            - entrada
+            - saida
+            - transferencia
+            - conferencia
+        building_type:
+          type: string
+          example: Casa
+          description: Tipo de imóvel
+          enum:
+            - Apartamento
+            - Casa
+            - Galpão
+            - Garagem
+            - Kitinete
+            - Loft
+            - Loja
+            - Prédio
+            - Sala
+            - Duplex
+            - Terreno
+        area:
+          type: float
+          example: 76
+          description: Área total do imóvel.
+        furnished:
+          type: string
+          example: furnished
+          description: Estado do imóvel
+          enum:
+            - furnished
+            - semi-furnished
+            - unfurnished
+        modality:
+          type: string
+          example: premium
+          description: Modalidade do pedido
+          enum:
+            - standard
+            - premium
+        express:
+          type: boolean
+          example: true
+          description: Opção por vistoria express
+    RejectedWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: REJECTED
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        observation:
+          type: string
+          example: Endereço não tem cobertura do serviço
+          description: Razão da recusa
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+    Report:
+      type: object
+      properties:
+        type:
+          type: string
+          example: inspection
+          description: Tipo de relatório
+        label:
+          type: string
+          example: Relatório de vistoria
+          description: Nome do relatório
+        withPictures:
+          type: boolean
+          example: true
+          description: Informa se o relatório possui imagens.
+        file_url:
+          type: string
+          example: 'https://relatorio.redevistorias.com.br/7f4c77a...'
+          description: URL onde o relatório pode ser obtido
+    Responsible:
+      type: object
+      description: Dados referentes à pessoa física responsável pela empresa.
+      required:
+        - name
+        - document
+      properties:
+        document:
+          type: string
+          example: 000.000.999-99
+          description: CPF do responsável da empresa.
+        name:
+          type: string
+          example: Novo Usuário
+          description: Nome completo do responsável da empresa.
+        cellphone:
+          type: string
+          example: (48) 99999-9999
+          description: 'Telefone celular do responsável da empresa, se houver.'
+        phone:
+          type: string
+          example: (48) 3000-0000
+          description: Telefone do responsável da empresa.
+        email:
+          type: string
+          example: ti@redevistorias.com.br
+          description: Email do responsável da empresa.
+        address:
+          $ref: '#/components/schemas/Address'
+    APIKeyGrant:
+      type: object
+      title: API Key
+      required:
+        - grant_type
+        - client_id
+        - client_secret
+        - api_key
+      properties:
+        grant_type:
+          type: string
+          enum:
+            - api_key
+        client_id:
+          type: string
+          example: erpfoo
+          description: >-
+            Identificação do ERP na API da Rede Vistorias, essa informação é
+            fornecida pela equipe da Rede Vistorias no momento da habilitação do
+            ERP.
+        client_secret:
+          type: string
+          example: B8WbfvPVX1ic
+          description: Senha do ERP na API da Rede Vistorias
+        api_key:
+          type: string
+          example: >-
+            ZAltqyeoXLlZLR6N9QP0QfyE7asIz65wZ8eBfBDr8o7W4dk9W93beJy0rZleOgQmmkm4jkkW54kv7dxh
+    ClientCredentialsGrant:
+      type: object
+      title: Client Credentials
+      required:
+        - grant_type
+        - client_id
+        - client_secret
+        - scope
+      properties:
+        grant_type:
+          type: string
+          example: client_credentials
+          enum:
+            - client_credentials
+        client_id:
+          type: string
+          example: erpfoo
+          description: Identificação do cliente na API do Rede Vistorias.
+        client_secret:
+          type: string
+          example: B8WbfvPVX1ic
+          description: Senha do cliente na API da Rede Vistorias
+        scope:
+          type: string
+          example: 'client:create'
+          description: 'Lista de escopos, separados por um espaço em branco.'
+          enum:
+            - 'client:create'
+    AuthorizationCodeRequest:
+      type: object
+      title: Request Authorization
+      required:
+        - response_type
+        - client_id
+        - redirect_uri
+        - scope
+      properties:
+        response_type:
+          type: string
+          example: code
+          enum:
+            - code
+        client_id:
+          type: string
+          example: erpfoo
+          description: Identificação do cliente na API do Rede Vistorias.
+        redirect_uri:
+          type: string
+          example: http://meu.erp.com.br/processar_integracao
+          description: URL que o usuário será redirecionado após realizar a autorizarização.
+        scope:
+          type: string
+          example: 'order:* financial:view'
+          description: 'Lista de escopos, separados por um espaço em branco.'
+        state:
+          type: string
+          example: 1f3870be274f6c49b3e31a0c6728957f
+          description: CSRF token
+    AuthorizationCodeGrant:
+      type: object
+      title: Authorization Code Grant
+      required:
+        - grant_type
+        - client_id
+        - client_secret
+        - redirect_uri
+        - scope
+        - code
+      properties:
+        grant_type:
+          type: string
+          example: authorization_code
+          enum:
+            - authorization_code
+        client_id:
+          type: string
+          example: erpfoo
+          description: Identificação do cliente na API do Rede Vistorias.
+        client_secret:
+          type: string
+          example: B8WbfvPVX1ic
+          description: Senha do cliente na API da Rede Vistorias
+        redirect_uri:
+          type: string
+          example: http://meu.erp.com.br/processar_integracao
+          description: URL que receberá o `Bearer token`
+        scope:
+          type: string
+          example: 'order:* financial:view'
+          description: 'Lista de escopos, separados por um espaço em branco.'
+        code:
+          type: string
+          example: tyqwu16573753...
+          description: Codigo de autorização
+    APIKeyResponse:
+      type: object
+      title: API Key response
+      properties:
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          example: 86400
+        access_token:
+          type: string
+          example: eyJ0eXAiO...
+        refresh_token:
+          type: string
+          example: def50200f44a3a36...
+    ClientCredentialsResponse:
+      type: object
+      title: Client credentials response
+      properties:
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          example: 86400
+        access_token:
+          type: string
+          example: eyJ0eXAiO...
+    CodeResponse:
+      type: object
+      title: Request authorization response
+      properties:
+        code:
+          type: string
+          example: tyqwu16573753...
+          description: Codigo de autorização
+        state:
+          type: string
+          example: 1f3870be274f6c49b3e31a0c6728957f
+          description: CSRF token
+    AuthorizationCodeResponse:
+      type: object
+      title: Authorization code response
+      properties:
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          example: 86400
+        access_token:
+          type: string
+          example: eyJ0eXAiO...
+        refresh_token:
+          type: string
+          example: def50200f44a3a36...
+    PreviousInspection:
+      type: object
+      title: PreviousInspection
+      properties:
+          file:
+            $ref: '#/components/schemas/File'
+          url:
+            $ref: '#/components/schemas/Url'
+          code:
+            type: string
+            example: PVLE.012.01710
+            description: Código do pedido de entrada (deve estar finalizado) que será base para o pedido de saída<br />
+                        Obs. Esta informação deve ser fornecida caso não se utilize o arquivo para criação do pedido
+    File:
+      type: object
+      title: File
+      properties:
+        remote_name:
+          type: string
+          example: 75300A80-2E79-492F-8B3F-4B6239D1319F\/ABD57818-40FE-11E9-A15D-02420A00001D
+          description: Nome obtido utilizando a rota <a href="#operation/uploadURL">upload de arquivos</a>
+        original_name:
+          type: string
+          example: arquivo-original
+          description: Nome original do arquivo
+        extension:
+          type: string
+          example: pdf
+          description: Formato pdf
+    Url:
+      type: string
+      title: Url
+      example: "http://example.com?upload=File.pdf"
+    TraceData:
+      type: object
+      title: TraceData
+    Divergence:
+      type: object
+      title: Divergence
+      properties:
+        created_at:
+          type: string
+          example: '2020-03-03 11:45:00'
+          description: Data e hora em que a divergência foi registrada
+        file_url:
+          type: string
+          example: 'http://relatorio.sandbox.redevistorias.com.br/75300A80-2E79-492F-8B3F-4B6239D1319F/1C856200-4689-11E9-B1D9-0242AC120003_0_1E3965C3FC2FAF9BCDD35A4F878D8AF7.docx'
+          description: URL para fazer o download do arquivo (docx) contendo as divergências registradas.
+        responsible:
+          type: object
+          properties:
+            cpf:
+              type: string
+              example: '000.111.222-33'
+              description: CPF do responsável que cadastrou as divergências.
+            email:
+              type: string
+              example: 'divergencia@redevistorias.com.br'
+              description: E-mail do responsável que cadastrou as divergências.
+            phone:
+              type: string
+              example: '(48) 3364-6808'
+              description: Telefone do responsável que cadastrou as divergências.
+            name:
+              type: string
+              example: 'José da Silva'
+              description: Nome do responsável que cadastrou as divergências.
+    CancelledWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: CANCELLED
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        observation:
+          type: string
+          example: O responsável pelo acompanhamento da vistoria não foi encontrado ou não pôde comparecer
+          description: Razão do cancelamento
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+    DivergenceWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: DIVERGENCE
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        divergence:
+          $ref: '#/components/schemas/Divergence'
+    AssignedWebhook:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VLE.987.00125
+          description: Código do pedido
+        status:
+          type: string
+          example: ASSIGNED
+          description: Estado do pedido
+        building_id:
+          type: string
+          example: Apt 203 - Ed Atol das Rocas
+          description: Identificação do imóvel.
+        inspector:
+          $ref: '#/components/schemas/Inspector'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+    Inspector:
+      type: object
+      properties:
+        rg:
+          type: string
+          example: 1234567 SSP SC
+          description: Número de registro e órgão emissor
+        cpf:
+          type: string
+          example: 111.111.111-00
+          description: Número do Cadastro de Pessoa Física
+        name:
+          type: string
+          example: José da Silva
+          description: Nome do vistoriador
+    OrderResponsible:
+      type: object
+      properties:
+        name:
+          type: string
+          example: José da Silva
+          description: Nome do responsável pelo pedido
+        email:
+          type: string
+          example: jose.silva@email.com
+          description: E-mail do responsável pelo pedido
+    Webhook:
+      type: object
+      discriminator:
+        propertyName: webhookType
+        mapping:
+          accepted: '#/components/schemas/AcceptedWebhook'
+          finished: '#/components/schemas/FinishedWebhook'
+          rejected: '#/components/schemas/RejectedWebhook'
+          cancelled: '#/components/schemas/CancelledWebhook'
+          divergence: '#/components/schemas/DivergenceWebhook'
+          assigned: '#/components/schemas/AssignedWebhook'
+      properties:
+        webhookType:
+          type: string
+          description: Tipos de webhooks utilizados
+    AccessInformation:
+      type: object
+      properties:
+        keys_location:
+          type: string
+          example: Imobiliária
+          description: Local de retirada das chaves
+        instructions:
+          type: string
+          example: Este imóvel precisa de autorização para ser acessado
+          description: Alguma questão específica sobre o acesso ao imóvel (alarme, autorização para entrada, etc.)
+    AccompaniedInspection:
+      type: object
+      properties:
+        is_accompanied:
+          type: boolean
+          example: true
+          description: Informa se haverá acompanhamento da vistoria
+        companion_name:
+          type: string
+          example: José da Silva
+          description: Nome da pessoa que irá acompanhar a vistoria
+        companion_contact:
+          type: string
+          example: (48) 98765-4321
+          description: Telefone de contato da pessoa que irá acompanhar a vistoria
+        schedule_date:
+          type: string
+          example: '2020-03-03 11:45:00'
+          description: Data agendada de acompanhamento da vistoria
+    Recommendation:
+      type: object
+      properties:
+        code:
+          type: string
+          example: RVPROMO123
+          description: Código de indicação
+    Schedule:
+      type: object
+      properties:
+        date:
+          type: string
+          example: '17/08/2021'
+          description: Data de realização da vistoria
+        start_time:
+          type: string
+          example: '14:00'
+          description: Horário previsto para início da vistoria
+        end_time:
+          type: string
+          example: '16:00'
+          description: Horário previsto para finalização da vistoria
+    PedidoFotosCaptacao:
+      title: Fotos
+      type: object
+      required:
+        - details
+        - address
+        - property_access
+        - building_details
+      properties:
+        details:
+          type: object
+          required:
+            - building_id
+            - building_type
+            - inspection_type
+            - furnished
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            inspection_type:
+              type: string
+              example: fotosDeCaptacao
+              description: Informação do tipo de pedido que será aberto
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id)
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            rooms_count:
+              type: string
+              example: '4'
+              description: Número de dependências 
+            suites_count:
+              type: string
+              example: '1'
+              description: Número de suítes
+        address:
+          $ref: '#/components/schemas/Address'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        building_details:
+          $ref: '#/components/schemas/BuildingDetails'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    BuildingDetails:
+      type: object
+      properties:
+        rooms:
+          type: object
+          example: [Gás encanado, Portaria, Sacada]
+          description: Informações sobre a existência de outras dependências/características relacionadas ao imóvel
+          enum:
+            - Lavanderia
+            - Playground
+            - Academia
+            - Gás encanado
+            - Portaria
+            - Sacada
+            - Quadra esportiva
+            - Piscina
+            - Elevador
+            - Hall de entrada
+        characteristics:
+          type: string
+          example: Características específicas do imóvel
+          description: Características específicas do imóvel
+
+x-webhooks:
+  acceptedWebhook:
+    post:
+      summary: Accepted
+      description: Este webhook é executado quando o pedido foi aceito.
+      operationId: acceptedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptedWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  finishedWebhook:
+    post:
+      summary: Finished
+      description: Este webhook é executado quando a vistoria é executada e finalizada.
+      operationId: finishedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishedWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  rejectedWebhook:
+    post:
+      summary: Rejected
+      description: Este webhook é executado quando, por razões diversas, o pedido foi rejeitado.
+      operationId: rejectedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectedWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  cancelledWebhook:
+    post:
+      summary: Cancelled
+      description: Este webhook é executado quando, por razões diversas, o pedido foi cancelado após ter sido aceito.
+      operationId: cancelledWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelledWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  divergenceWebhook:
+    post:
+      summary: Divergence
+      description: Este webhook é executado quando, após a vistoria ter sido entregue ao inquilino, este contesta alguma das informações presentes.
+      operationId: divergenceWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DivergenceWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  assignedWebhook:
+    post:
+      summary: Assigned
+      description: Este webhook é executado quando se atribui um vistoriador ao pedido de vistoria, somente após o pedido ter sido aceito.
+      operationId: assignedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignedWebhook'
+      responses:
+        '200':
+          description: 'OK'
