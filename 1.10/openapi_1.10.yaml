@@ -1581,8 +1581,7 @@ components:
       required:
         - details
         - address
-        - property_access
-        - building_details
+        - access_information
       properties:
         details:
           type: object
