@@ -1565,7 +1565,7 @@ components:
       properties:
         date:
           type: string
-          example: '17/08/2021'
+          example: '2021-08-17'
           description: Data de realização da vistoria
         start_time:
           type: string
