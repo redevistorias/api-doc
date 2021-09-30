@@ -1508,6 +1508,10 @@ components:
           type: string
           example: jose.silva@email.com
           description: E-mail do responsável pelo pedido
+        phone:
+          type: string
+          example: (48) 98765-4321
+          description: Telefone do responsável pelo pedido
     Webhook:
       type: object
       discriminator:
