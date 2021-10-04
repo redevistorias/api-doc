@@ -1508,6 +1508,10 @@ components:
           type: string
           example: jose.silva@email.com
           description: E-mail do responsável pelo pedido
+        phone:
+          type: string
+          example: (48) 98765-4321
+          description: Telefone do responsável pelo pedido
     Webhook:
       type: object
       discriminator:
@@ -1565,7 +1569,7 @@ components:
       properties:
         date:
           type: string
-          example: '17/08/2021'
+          example: '2021-08-17'
           description: Data de realização da vistoria
         start_time:
           type: string
