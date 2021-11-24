@@ -699,6 +699,10 @@ components:
           type: string
           example: Detalhes informados pela RV
           description: O campo vai retornar detalhes informados pela RV
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResource'
     Integration:
       type: object
       required:
@@ -1674,6 +1678,26 @@ components:
           type: string
           example: Características específicas do imóvel
           description: Características específicas do imóvel
+    OrderResource:
+      type: object
+      title: Pode conter os recursos do pedido (sejam os próprios relatórios, um arquivo zip contendo apenas as fotos, ou algum outro tipo de recurso)
+      properties:
+        type:
+          type: string
+          description: Tipo de recurso (semelhante ao tipo de relatório, mas podendo incluir outros tipos)
+          example: photos
+        label:
+          type: string
+          description: Nome do recurso
+          example: Arquivo de fotos
+        withPictures:
+          type: boolean
+          description: Informa se o recurso possui imagens
+          example: true
+        file_url:
+          type: string
+          description: URL onde o recurso pode ser obtido
+          example: 'https://relatorio.redevistorias.com.br/7f4c77a...'
 
 x-webhooks:
   acceptedWebhook:
