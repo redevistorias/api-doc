@@ -659,8 +659,8 @@ components:
           type: integer
           example: 12
           description: >-
-            Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-            Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+            Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
     Notes:
         type: string
         example: Notas que irão aparecer no relatório
@@ -833,8 +833,8 @@ components:
               type: integer
               example: 12
               description: >-
-                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+                Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -944,8 +944,8 @@ components:
               type: integer
               example: 12
               description: >-
-                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+                Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -1057,8 +1057,8 @@ components:
               type: integer
               example: 12
               description: >-
-                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+                Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -1169,8 +1169,8 @@ components:
               type: integer
               example: 12
               description: >-
-                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+                Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -1951,8 +1951,8 @@ components:
               type: integer
               example: 12
               description: >-
-                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+                Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
             area:
               type: float
               example: 345
@@ -2111,8 +2111,8 @@ components:
               type: integer
               example: 12
               description: >-
-                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades).<br />
+                Essa key não precisa ser informada caso o cliente seja atendido por apenas uma unidade.
         address:
           $ref: '#/components/schemas/Address'
         keys:
