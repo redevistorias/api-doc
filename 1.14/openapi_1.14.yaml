@@ -10,7 +10,7 @@ info:
     As rotas de autenticação, por sua vez, possuem sua própria URL, também possuindo ambientes de produção e sandbox:
     - Produção: https://auth.redevistorias.com.br
     - Sandbox: https://auth.sandbox.redevistorias.com.br
-  version: '1.5'
+  version: '1.14'
   title: Rede Vistorias ERP API
   contact:
     email: ti@redevistorias.com.br
@@ -27,26 +27,13 @@ tags:
       Para a integração de um serviço externo com a API da Rede Vistorias é
       necessária a utilização de uma API Key fornecida pelo usuário (ou
       adquirida no cadastro do cliente). Possuindo uma API Key é possível gerar
-      um 'Bearer token' com validade de 1 dia. Este token é obrigatório em todos
+      um 'Bearer token' com validade de 24 horas, a contar do momento de sua geração. Este token é obrigatório em todos
       os requests na API da Rede Vistorias.
   - name: Clientes
     description: Integração de novos clientes à API da Rede Vistorias.
-  #- name: Integrações
-  #  description: |
-  #    ![Diagrama de criação do cliente através da API](../images/existing_client.jpg)
-
-  #    Caso o cliente a ser cadastrado já exista no nosso banco de dados, um aviso
-  #    será retornado, informando que o cliente já existe em nossa base de dados (1.1).
-  #    Assim, será necessário acessar a página de login (2), e, após fazer o login,
-  #    conceder as permissões necessárias (2.1). Feito isso, será retornado um código de
-  #    autorização (2.2). Com este código deverá ser feita uma requisição (3), em nosso
-  #    servidor de autenticação, que retornará o token de autenticação do usuário (3.1).
-  #    Com este token, é possível fazer uma requisição à API da Rede Vistorias, para fazer
-  #    a integração ([4](#operation/addIntegration)), recebendo na resposta a API key, utilizada na geração do token
-  #    de autenticação requerido pelos demais endpoints da API (4.1).
   - name: Pedidos
     description: >-
-      A API da Rede Vistorias provê uma forma de serviços externos realizarem
+      A API da Rede Vistorias provê uma forma de serviços externos para realizar
       pedidos de vistorias. Todas alterações no pedido que sejam relevantes para
       o cliente serão notificadas por um webhook no endpoint informado no
       momento da geração da API Key. Cada webhook possui um formato específico
@@ -55,21 +42,17 @@ tags:
     description: >-
       A API da Rede Vistorias provê uma rota para simular o preço de uma
       vistoria.
-  - name: Recursos
-    description: >-
-      Algumas vistorias possuem recursos extras que podem ser acessado pelo integrador,
-      essa rota possibilita esse acesso.
   - name: Webhook
     description: >-
-      O serviço do Rede Vistorias utiliza webhooks para notificar a ferramenta de integração utilizada pelo cliente sobre
+      O serviço da Rede Vistorias utiliza webhooks para notificar a ferramenta de integração utilizada pelo cliente sobre
       mudanças do estado do pedido realizado. Esse webhook deve ter caráter público e é informado pelo
       usuário do sistema no momento de criação da integração. Os eventos
       existentes são emitidos sempre para a mesma URL seguindo o fluxo do pedido quando é aprovado, rejeitado, atribuído ou
       finalizado.
   - name: Upload URL
     description: >-
-      A API do Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma,
-      utilizado quando uma vistoria requer uma anterior (caso das vistorias de saída e conferência),
+      A API da Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma,
+      utilizada quando uma vistoria requer uma anterior (caso das vistorias de saída e conferência),
       podendo ser feito esse upload.
   - name: Unidades
     description: >-
@@ -85,7 +68,7 @@ paths:
       description: |
         ![Diagrama de sequencia do processo de adquirir um token baseado em uma api key](../images/apikey_authorization.jpg)
 
-        Esta requisição aceita três tipos de "grant_type":
+        Esta requisição aceita dois tipos de "grant_type":
         - **api_key**: O token gerado neste tipo de requisição é utilizado para
         fazer novos pedidos na API (utilizado nas requisições de Pedidos ou
         Price Preview)
@@ -123,7 +106,7 @@ paths:
       description: >-
         Utilizando esta rota, é possível conseguir a URL para upload de um arquivo
         na nossa plataforma, associando este arquivo a um remote-name, utilizado por outras
-        rotas. Assim, é possível fazer upload na plataforma da S3, fazendo uma requisição do tipo
+        rotas. Assim, é possível efetuar o upload na plataforma da S3, fazendo uma requisição do tipo
         PUT na URL gerada, e passando o arquivo na requisição. Maiores informações podem ser obtidas
         na <a href="https://docs.aws.amazon.com/pt_br/AmazonS3/latest/dev/PresignedUrlUploadObject.html" target="_blank">documentação da Amazon</a>.
       operationId: uploadURL
@@ -162,14 +145,14 @@ paths:
     post:
       tags:
         - Clientes
-      summary: Cadastra um novo cliente na API do Rede Vistorias
+      summary: Cadastra um novo cliente na API da Rede Vistorias
       description: >-
         Novos clientes podem ser cadastrados diretamente pela API disponibilizada
         pela Rede Vistorias, passando os dados informados abaixo.
 
         ![Diagrama de criação do cliente através da API](../images/new_client.jpg)
 
-        <br />Todavia, caso o cliente já exista em nosso banco de dados, um erro de conflito será gerado.
+        <br />Todavia, caso o cliente já exista em nosso banco de dados, um erro de conflito será retornado.
       operationId: addNaturalPerson
       parameters:
         - in: header
@@ -194,23 +177,6 @@ paths:
           description: Unauthorized
         '409':
           description: Already existing client
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  auth_domain:
-                    type: string
-                    example: 'https://auth.redevistorias.com.br/token'
-                    description: >-
-                      Pagina do servidor de autorização onde o usuário irá
-                      permitir o acesso aos seus dados.
-                  auth_scopes:
-                    type: string
-                    example: 'order:* financial:view'
-                    description: >-
-                      Lista de escopos que deve ser enviado para o servidor de
-                      autorização.
       requestBody:
         content:
           application/json:
@@ -219,58 +185,22 @@ paths:
                 - $ref: '#/components/schemas/ClientPessoaFisica'
                 - $ref: '#/components/schemas/ClientPessoaJuridica'
         description: >-
-          A API da Rede Vistorias provê uma forma de serviços externos adicionar
+          A API da Rede Vistorias provê uma forma de serviços externos para adicionar
           novos clientes no sistema. Este cliente pode ser tanto uma pessoa
           física quanto uma pessoa jurídica. No caso do cliente ser pessoa
           jurídica, é necessário também informar os dados do responsável na
           empresa - seu documento, nome, contato e endereço.
         required: true
-  #/integrations:
-  #  post:
-  #    tags:
-  #      - Integrações
-  #    summary: Cadastra uma nova integração de cliente na API do Rede Vistorias
-  #    description: ''
-  #    operationId: addIntegration
-  #    parameters:
-  #      - in: header
-  #        name: Authorization
-  #        required: true
-  #        example: Bearer eyJ0eXAiOiJKV1QiL...
-  #        schema:
-  #          type: string
-  #    responses:
-  #      '201':
-  #        description: Created
-  #        content:
-  #          application/json:
-  #            schema:
-  #              type: object
-  #              properties:
-  #                api_key:
-  #                  type: string
-  #                  example: edyhudas876...
-  #                  description: API KEY used to get the bearer token
-  #      '400':
-  #        description: Bad request.
-  #      '401':
-  #        description: Unauthorized
-  #      '404':
-  #        description: Client not found
-  #    requestBody:
-  #      content:
-  #        application/json:
-  #          schema:
-  #            $ref: '#/components/schemas/Integration'
-  #      required: true
   /orders:
     post:
       tags:
         - Pedidos
-      summary: Cadastra um novo pedido de vistoria na API do Rede Vistorias.
+      summary: Cadastra um novo pedido de vistoria na API da Rede Vistorias.
       description: O retorno é o código cadastrado da vistoria, e o preço que será consumido do pacote contratado pelo cliente, em metros quadrados.<br />
                   No caso do pedido de saída ou de conferência, deve ser informada a inspeção anterior. Isto pode ser feito de duas formas, fazendo o upload
                   de um arquivo (ver <a href="#tag/Upload-URL">Upload URL</a>) ou informando um link já existente, que será processado por nossa plataforma.
+                  Para pedidos de aditivo, deve-se obrigatoriamente informar apenas o código do pedido anterior, sendo ele um pedido de entrada ou um outro 
+                  pedido de aditivo.
       operationId: addPedido
       parameters:
         - in: header
@@ -308,6 +238,9 @@ paths:
                 - $ref: '#/components/schemas/PedidoSaida'
                 - $ref: '#/components/schemas/PedidoConferencia'
                 - $ref: '#/components/schemas/PedidoTransferencia'
+                - $ref: '#/components/schemas/PedidoFotosCaptacao'
+                - $ref: '#/components/schemas/PedidoAditivo'
+                - $ref: '#/components/schemas/PedidoTourVirtual'
         required: true
   /price_preview:
     post:
@@ -382,109 +315,6 @@ paths:
           description: Bad request.
         '401':
           description: Unauthorized
-  /acceptedWebhook:
-    post:
-      tags:
-        - Webhook
-      summary: Accepted Webhook
-      description: Este webhook é executado quando o pedido foi aceito.
-      operationId: acceptedWebhook
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AcceptedWebhook'
-        required: true
-  /finishedWebhook:
-    post:
-      tags:
-        - Webhook
-      summary: Finished Webhook
-      description: Este webhook é executado quando a vistoria é executada e finalizada.
-      operationId: finishedWebhook
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FinishedWebhook'
-        required: true
-  /rejectedWebhook:
-    post:
-      tags:
-        - Webhook
-      summary: Rejected Webhook
-      description: >-
-        Este webhook é executado quando, por razões diversas, o pedido foi
-        rejeitado.
-      operationId: rejectedWebhook
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RejectedWebhook'
-        required: true
-  /cancelledWebhook:
-    post:
-      tags:
-        - Webhook
-      summary: Cancelled Webhook
-      description: >-
-        Este webhook é executado quando, por razões diversas, o pedido foi cancelado
-        após ter sido aceito.
-      operationId: cancelledWebhook
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelledWebhook'
-        required: true
-  /divergenceWebhook:
-    post:
-      tags:
-        - Webhook
-      summary: Divergence Webhook
-      description: >-
-        Este webhook é executado quando, após a vistoria ter sido entregue ao inquilino,
-        este contesta alguma das informações presentes.
-      operationId: divergenceWebhook
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DivergenceWebhook'
-        required: true
-  /assignedWebhook:
-    post:
-      tags:
-        - Webhook
-      summary: Assigned Webhook
-      description: >-
-        Este webhook é executado quando se atribui um vistoriador ao pedido de vistoria, somente após o pedido ter sido aceito.
-      operationId: assignedWebhook
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AssignedWebhook'
-        required: true
   /franchisees:
     get:
       tags:
@@ -492,7 +322,7 @@ paths:
       summary: Recebe uma lista das unidades com as quais o cliente possui vínculo
       description: >-
         O retorno é uma lista de unidades, contendo os params "id" e "name", de forma a facilitar a identificação 
-        de qual unidade se deseja inserir no pedido.
+        de qual unidade se deseja inserir no pedido (franchisee_id).
       operationId: getFranchisees
       parameters:
         - in: header
@@ -569,7 +399,7 @@ components:
           example: R. Pastor William Richard Schisler Filho
         number:
           type: string
-          example: 452
+          example: '452'
         complement:
           type: string
           example: Sala 3
@@ -642,7 +472,7 @@ components:
         document:
           type: string
           example: 000.000.999-99
-          description: 'Identificador do cliente, CPF para pessoas físicas.'
+          description: 'Identificador do cliente (CPF, para pessoas físicas)'
         name:
           type: string
           example: Novo Usuário
@@ -688,7 +518,7 @@ components:
         document:
           type: string
           example: 00.111.333/1000-98
-          description: 'Identificador do cliente: CNPJ, para pessoas jurídicas.'
+          description: 'Identificador do cliente (CNPJ, para pessoas jurídicas)'
         name:
           type: string
           example: Novo Usuário
@@ -775,6 +605,10 @@ components:
             - saida
             - transferencia
             - conferencia
+            - fotosDeCaptacao
+            - aditivo
+            - tourVirtual
+          description: Esta informação deve ser alterada de acordo com o pedido que será aberto
         purpose:
           type: string
           example: Residencial
@@ -811,7 +645,7 @@ components:
           example: 12
           description: >-
             Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
-            Essa key não deve ser informada caso não haja uma unidade (franchisee_id)
+            Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
     Notes:
         type: string
         example: Notas que irão aparecer no relatório
@@ -839,7 +673,7 @@ components:
           type: string
           example: 'https://vistori.as/VLE98700125'
           description: >-
-            URL do hotiste onde o cliente poderá executar ações sobre este
+            URL do hotsite onde o cliente poderá executar ações sobre este
             pedido.
         reports:
           type: array
@@ -847,6 +681,14 @@ components:
             $ref: '#/components/schemas/Report'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        observation:
+          type: string
+          example: Detalhes informados pela RV
+          description: O campo vai retornar detalhes informados pela RV
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResource'
     Integration:
       type: object
       required:
@@ -896,7 +738,94 @@ components:
         - address
       properties:
         details:
-          $ref: '#/components/schemas/Detail'
+          type: object
+          required:
+            - building_id
+            - building_type
+            - area
+            - inspection_type
+            - furnished
+            - modality
+            - express
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            inspection_type:
+              type: string
+              example: entrada
+              enum:
+                - entrada
+                - saida
+                - transferencia
+                - conferencia
+                - fotosDeCaptacao
+                - aditivo
+                - tourVirtual
+              description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+            purpose:
+              type: string
+              example: Residencial
+              enum:
+                - Residencial
+                - Comercial
+                - Galpão
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            modality:
+              type: string
+              example: premium
+              description: Modalidade do pedido.
+              enum:
+                - standard
+                - premium
+            express:
+              type: boolean
+              example: true
+              description: Opção por vistoria express.
+            details:
+              type: string
+              example: 'Retirar as chaves às 14:00.'
+              description: >-
+                Informações adicionais importantes ao pedido, por exemplo, local das
+                chaves, horário de retirada, etc.
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -905,10 +834,18 @@ components:
           $ref: '#/components/schemas/Cost'
         people:
           $ref: '#/components/schemas/PessoaEntrada'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
         notes:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     PedidoSaida:
       title: Saída
       type: object
@@ -918,7 +855,94 @@ components:
         - previous_inspection
       properties:
         details:
-          $ref: '#/components/schemas/Detail'
+          type: object
+          required:
+            - building_id
+            - building_type
+            - area
+            - inspection_type
+            - furnished
+            - modality
+            - express
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            inspection_type:
+              type: string
+              example: saida
+              enum:
+                - entrada
+                - saida
+                - transferencia
+                - conferencia
+                - fotosDeCaptacao
+                - aditivo
+                - tourVirtual
+              description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+            purpose:
+              type: string
+              example: Residencial
+              enum:
+                - Residencial
+                - Comercial
+                - Galpão
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            modality:
+              type: string
+              example: premium
+              description: Modalidade do pedido.
+              enum:
+                - standard
+                - premium
+            express:
+              type: boolean
+              example: true
+              description: Opção por vistoria express.
+            details:
+              type: string
+              example: 'Retirar as chaves às 14:00.'
+              description: >-
+                Informações adicionais importantes ao pedido, por exemplo, local das
+                chaves, horário de retirada, etc.
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -929,10 +953,18 @@ components:
           $ref: '#/components/schemas/PessoaSaida'
         previous_inspection:
           $ref: '#/components/schemas/PreviousInspection'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
         notes:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     PedidoConferencia:
       title: Conferência
       type: object
@@ -942,7 +974,94 @@ components:
         - previous_inspection
       properties:
         details:
-          $ref: '#/components/schemas/Detail'
+          type: object
+          required:
+            - building_id
+            - building_type
+            - area
+            - inspection_type
+            - furnished
+            - modality
+            - express
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            inspection_type:
+              type: string
+              example: conferencia
+              enum:
+                - entrada
+                - saida
+                - transferencia
+                - conferencia
+                - fotosDeCaptacao
+                - aditivo
+                - tourVirtual
+              description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+            purpose:
+              type: string
+              example: Residencial
+              enum:
+                - Residencial
+                - Comercial
+                - Galpão
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            modality:
+              type: string
+              example: premium
+              description: Modalidade do pedido.
+              enum:
+                - standard
+                - premium
+            express:
+              type: boolean
+              example: true
+              description: Opção por vistoria express.
+            details:
+              type: string
+              example: 'Retirar as chaves às 14:00.'
+              description: >-
+                Informações adicionais importantes ao pedido, por exemplo, local das
+                chaves, horário de retirada, etc.
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -952,11 +1071,19 @@ components:
         people:
           $ref: '#/components/schemas/PessoaConferencia'
         previous_inspection:
-          $ref: '#/components/schemas/PreviousInspection'
+          $ref: '#/components/schemas/PreviousInspectionConferencia'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
         notes:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     PedidoTransferencia:
       title: Transferência
       type: object
@@ -965,7 +1092,94 @@ components:
         - address
       properties:
         details:
-          $ref: '#/components/schemas/Detail'
+          type: object
+          required:
+            - building_id
+            - building_type
+            - area
+            - inspection_type
+            - furnished
+            - modality
+            - express
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            inspection_type:
+              type: string
+              example: transferencia
+              enum:
+                - entrada
+                - saida
+                - transferencia
+                - conferencia
+                - fotosDeCaptacao
+                - aditivo
+                - tourVirtual
+              description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+            purpose:
+              type: string
+              example: Residencial
+              enum:
+                - Residencial
+                - Comercial
+                - Galpão
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            modality:
+              type: string
+              example: premium
+              description: Modalidade do pedido.
+              enum:
+                - standard
+                - premium
+            express:
+              type: boolean
+              example: true
+              description: Opção por vistoria express.
+            details:
+              type: string
+              example: 'Retirar as chaves às 14:00.'
+              description: >-
+                Informações adicionais importantes ao pedido, por exemplo, local das
+                chaves, horário de retirada, etc.
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
         address:
           $ref: '#/components/schemas/Address'
         keys:
@@ -974,10 +1188,18 @@ components:
           $ref: '#/components/schemas/Cost'
         people:
           $ref: '#/components/schemas/PessoaTransferencia'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
         notes:
           $ref: '#/components/schemas/Notes'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
     Person:
       type: object
       required:
@@ -1305,9 +1527,8 @@ components:
           type: string
           example: erpfoo
           description: >-
-            Identificação do ERP na API da Rede Vistorias, essa informação é
-            fornecida pela equipe da Rede Vistorias no momento da habilitação do
-            ERP.
+            Identificação do ERP na API da Rede Vistorias.<br />
+            * Essa informação é fornecida pela equipe da Rede Vistorias no momento da habilitação do ERP.
         client_secret:
           type: string
           example: B8WbfvPVX1ic
@@ -1333,7 +1554,7 @@ components:
         client_id:
           type: string
           example: erpfoo
-          description: Identificação do cliente na API do Rede Vistorias.
+          description: Identificação do cliente na API da Rede Vistorias.
         client_secret:
           type: string
           example: B8WbfvPVX1ic
@@ -1361,11 +1582,11 @@ components:
         client_id:
           type: string
           example: erpfoo
-          description: Identificação do cliente na API do Rede Vistorias.
+          description: Identificação do cliente na API da Rede Vistorias.
         redirect_uri:
           type: string
           example: http://meu.erp.com.br/processar_integracao
-          description: URL que o usuário será redirecionado após realizar a autorizarização.
+          description: URL que o usuário será redirecionado após realizar a autorização.
         scope:
           type: string
           example: 'order:* financial:view'
@@ -1393,7 +1614,7 @@ components:
         client_id:
           type: string
           example: erpfoo
-          description: Identificação do cliente na API do Rede Vistorias.
+          description: Identificação do cliente na API da Rede Vistorias.
         client_secret:
           type: string
           example: B8WbfvPVX1ic
@@ -1474,15 +1695,15 @@ components:
       type: object
       title: PreviousInspection
       properties:
-          file:
-            $ref: '#/components/schemas/File'
-          url:
-            $ref: '#/components/schemas/Url'
-          code:
-            type: string
-            example: PVLE.012.01710
-            description: Código do pedido de entrada (deve estar finalizado) que será base para o pedido de saída<br />
-                        Obs. Esta informação deve ser fornecida caso não se utilize o arquivo para criação do pedido
+        file:
+          $ref: '#/components/schemas/File'
+        url:
+          $ref: '#/components/schemas/Url'
+        code:
+          type: string
+          example: PVLE.012.01710
+          description: Código do pedido de entrada (deve estar finalizado) que será base para o pedido de saída<br />
+                      Obs. Esta informação deve ser fornecida caso não se utilize o arquivo para criação do pedido
     File:
       type: object
       title: File
@@ -1537,7 +1758,7 @@ components:
               type: string
               example: 'José da Silva'
               description: Nome do responsável que cadastrou as divergências.
-    CancelledWebhook:
+    CanceledWebhook:
       type: object
       properties:
         code:
@@ -1558,6 +1779,10 @@ components:
           description: Razão do cancelamento
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        price:
+          type: string
+          example: '50.00'
+          description: Valor cobrado após cancelamento do pedido (se for realizado a pedido do cliente, será cobrada a taxa de deslocamento)
     DivergenceWebhook:
       type: object
       properties:
@@ -1596,6 +1821,8 @@ components:
           $ref: '#/components/schemas/Inspector'
         trace_data:
           $ref: '#/components/schemas/TraceData'
+        schedule:
+          $ref: '#/components/schemas/Schedule'
     Inspector:
       type: object
       properties:
@@ -1611,3 +1838,534 @@ components:
           type: string
           example: José da Silva
           description: Nome do vistoriador
+    OrderResponsible:
+      type: object
+      properties:
+        name:
+          type: string
+          example: José da Silva
+          description: Nome do responsável pelo pedido
+        email:
+          type: string
+          example: jose.silva@email.com
+          description: E-mail do responsável pelo pedido
+        phone:
+          type: string
+          example: (48) 98765-4321
+          description: Telefone do responsável pelo pedido
+    Webhook:
+      type: object
+      discriminator:
+        propertyName: webhookType
+        mapping:
+          accepted: '#/components/schemas/AcceptedWebhook'
+          finished: '#/components/schemas/FinishedWebhook'
+          rejected: '#/components/schemas/RejectedWebhook'
+          canceled: '#/components/schemas/CanceledWebhook'
+          divergence: '#/components/schemas/DivergenceWebhook'
+          assigned: '#/components/schemas/AssignedWebhook'
+      properties:
+        webhookType:
+          type: string
+          description: Tipos de webhooks utilizados
+    AccessInformation:
+      type: object
+      properties:
+        keys_location:
+          type: string
+          example: Imobiliária
+          description: Local de retirada das chaves
+        instructions:
+          type: string
+          example: Este imóvel precisa de autorização para ser acessado
+          description: Alguma questão específica sobre o acesso ao imóvel (alarme, autorização para entrada, etc.)
+    AccompaniedInspection:
+      type: object
+      properties:
+        is_accompanied:
+          type: boolean
+          example: true
+          description: Informa se haverá acompanhamento da vistoria
+        companion_name:
+          type: string
+          example: José da Silva
+          description: Nome da pessoa que irá acompanhar a vistoria
+        companion_contact:
+          type: string
+          example: (48) 98765-4321
+          description: Telefone de contato da pessoa que irá acompanhar a vistoria
+        schedule_date:
+          type: string
+          example: '2020-03-03 11:45:00'
+          description: Data agendada de acompanhamento da vistoria
+    Recommendation:
+      type: object
+      properties:
+        code:
+          type: string
+          example: RVPROMO123
+          description: Código de indicação
+    Schedule:
+      type: object
+      properties:
+        date:
+          type: string
+          example: '2021-08-17'
+          description: Data de realização da vistoria
+        start_time:
+          type: string
+          example: '14:00'
+          description: Horário previsto para início da vistoria
+        end_time:
+          type: string
+          example: '16:00'
+          description: Horário previsto para finalização da vistoria
+    PedidoFotosCaptacao:
+      title: Fotos
+      type: object
+      required:
+        - details
+        - address
+        - access_information
+      properties:
+        details:
+          type: object
+          required:
+            - building_id
+            - building_type
+            - inspection_type
+            - furnished
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            inspection_type:
+              type: string
+              example: fotosDeCaptacao
+              description: Informação do tipo de pedido que será aberto
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            rooms_count:
+              type: string
+              example: '4'
+              description: Número de dependências 
+            suites_count:
+              type: string
+              example: '1'
+              description: Número de suítes
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
+        address:
+          $ref: '#/components/schemas/Address'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        building_details:
+          $ref: '#/components/schemas/BuildingDetails'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    BuildingDetails:
+      type: object
+      properties:
+        rooms:
+          type: object
+          example: [Gás encanado, Portaria, Sacada]
+          description: Informações sobre a existência de outras dependências/características relacionadas ao imóvel
+          enum:
+            - Lavanderia
+            - Playground
+            - Academia
+            - Gás encanado
+            - Portaria
+            - Sacada
+            - Quadra esportiva
+            - Piscina
+            - Elevador
+            - Hall de entrada
+        characteristics:
+          type: string
+          example: Características específicas do imóvel
+          description: Características específicas do imóvel
+    OrderResource:
+      type: object
+      title: Pode conter os recursos do pedido (sejam os próprios relatórios, um arquivo zip contendo apenas as fotos, ou algum outro tipo de recurso)
+      properties:
+        type:
+          type: string
+          description: Tipo de recurso (semelhante ao tipo de relatório, mas podendo incluir outros tipos)
+          example: photos
+        label:
+          type: string
+          description: Nome do recurso
+          example: Arquivo de fotos
+        withPictures:
+          type: boolean
+          description: Informa se o recurso possui imagens
+          example: true
+        file_url:
+          type: string
+          description: URL onde o recurso pode ser obtido
+          example: 'https://relatorio.redevistorias.com.br/7f4c77a...'
+    PedidoAditivo:
+      type: object
+      title: Aditivo
+      required:
+        - details
+        - address
+        - previous_inspection
+      properties:
+        details:
+          type: object
+          required:
+            - building_id
+            - building_type
+            - area
+            - inspection_type
+            - furnished
+            - modality
+            - express
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            inspection_type:
+              type: string
+              example: aditivo
+              enum:
+                - entrada
+                - saida
+                - transferencia
+                - conferencia
+                - fotosDeCaptacao
+                - aditivo
+                - tourVirtual
+              description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+            purpose:
+              type: string
+              example: Residencial
+              enum:
+                - Residencial
+                - Comercial
+                - Galpão
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            modality:
+              type: string
+              example: premium
+              description: Modalidade do pedido.
+              enum:
+                - standard
+                - premium
+            express:
+              type: boolean
+              example: true
+              description: Opção por vistoria express.
+            details:
+              type: string
+              example: 'Retirar as chaves às 14:00.'
+              description: >-
+                Informações adicionais importantes ao pedido, por exemplo, local das
+                chaves, horário de retirada, etc.
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
+        address:
+          $ref: '#/components/schemas/Address'
+        keys:
+          $ref: '#/components/schemas/Key'
+        cost:
+          $ref: '#/components/schemas/Cost'
+        people:
+          $ref: '#/components/schemas/PessoaSaida'
+        previous_inspection:
+          $ref: '#/components/schemas/PreviousInspectionAditivo'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        notes:
+          $ref: '#/components/schemas/Notes'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+    PreviousInspectionAditivo:
+      type: object
+      title: PreviousInspectionAditivo
+      properties:
+        code:
+          type: string
+          example: PVLE.012.01710
+          description: Código do pedido de entrada ou aditivo (deve estar finalizado) que será base para o pedido de aditivo.<br />
+    PreviousInspectionConferencia:
+      type: object
+      title: PreviousInspectionConferencia
+      properties:
+        file:
+          $ref: '#/components/schemas/File'
+        url:
+          $ref: '#/components/schemas/Url'
+        code:
+          type: string
+          example: PVLS.012.01710
+          description: Código do pedido de saída ou conferência (deve estar finalizado) que será base para o pedido de conferência.<br />
+    PedidoTourVirtual:
+      type: object
+      title: Tour Virtual
+      required:
+        - details
+        - address
+        - access_information
+      properties:
+        details:
+          type: object
+          required:
+            - building_id
+            - building_type
+            - area
+            - inspection_type
+            - furnished
+            - modality
+            - express
+          properties:
+            building_id:
+              type: string
+              maxLength: 30
+              example: Ed. Itacoru II - Bl 8 Apt 301
+              description: Identificação do imóvel.
+            building_type:
+              type: string
+              example: Casa
+              enum:
+                - Apartamento
+                - Casa
+                - Galpão
+                - Garagem
+                - Kitinete
+                - Loft
+                - Loja
+                - Prédio
+                - Sala
+                - Duplex
+                - Terreno
+            area:
+              type: float
+              example: 345
+              description: Área total do imóvel.
+            inspection_type:
+              type: string
+              example: tourVirtual
+              enum:
+                - entrada
+                - saida
+                - transferencia
+                - conferencia
+                - fotosDeCaptacao
+                - aditivo
+                - tourVirtual
+              description: Esta informação deve ser alterada de acordo com o pedido que será aberto
+            purpose:
+              type: string
+              example: Residencial
+              enum:
+                - Residencial
+                - Comercial
+                - Galpão
+            furnished:
+              type: string
+              example: unfurnished
+              enum:
+                - furnished
+                - semi-furnished
+                - unfurnished
+            details:
+              type: string
+              example: 'Retirar as chaves às 14:00.'
+              description: >-
+                Informações adicionais importantes ao pedido, por exemplo, local das
+                chaves, horário de retirada, etc.
+            franchisee_id:
+              type: integer
+              example: 12
+              description: >-
+                Código da unidade que está gerando o pedido. (Valor obtido na listagem de unidades)
+                Essa key não deve ser informada caso não haja uma unidade (franchisee_id).
+            allowed_at_date:
+              type: string
+              example: '2020-03-03 11:45:00'
+              description: >-
+                Data de liberação para execução da vistoria
+        address:
+          $ref: '#/components/schemas/Address'
+        access_information:
+          $ref: '#/components/schemas/AccessInformation'
+        accompanied_inspection:
+          $ref: '#/components/schemas/AccompaniedInspection'
+        recommendation:
+          $ref: '#/components/schemas/Recommendation'
+        trace_data:
+          $ref: '#/components/schemas/TraceData'
+        responsible:
+          $ref: '#/components/schemas/OrderResponsible'
+
+x-webhooks:
+  acceptedWebhook:
+    post:
+      summary: Accepted
+      description: Este webhook é executado quando o pedido foi aceito.
+      operationId: acceptedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptedWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  finishedWebhook:
+    post:
+      summary: Finished
+      description: Este webhook é executado quando a vistoria é executada e finalizada.
+      operationId: finishedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishedWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  rejectedWebhook:
+    post:
+      summary: Rejected
+      description: Este webhook é executado quando, por razões diversas, o pedido foi rejeitado.
+      operationId: rejectedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectedWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  canceledWebhook:
+    post:
+      summary: Canceled
+      description: Este webhook é executado quando, por razões diversas, o pedido foi cancelado após ter sido aceito.
+      operationId: canceledWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanceledWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  divergenceWebhook:
+    post:
+      summary: Divergence
+      description: Este webhook é executado quando, após a vistoria ter sido entregue ao inquilino, este contesta alguma das informações presentes.
+      operationId: divergenceWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DivergenceWebhook'
+      responses:
+        '200':
+          description: 'OK'
+  assignedWebhook:
+    post:
+      summary: Assigned
+      description: Este webhook é executado quando se atribui um vistoriador ao pedido de vistoria, somente após o pedido ter sido aceito.
+      operationId: assignedWebhook
+      tags:
+        - Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignedWebhook'
+      responses:
+        '200':
+          description: 'OK'
