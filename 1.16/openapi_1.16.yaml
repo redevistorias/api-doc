@@ -1884,7 +1884,7 @@ components:
           example: Outro
           description: Informação do tipo de local de retirada de chave para realização da vistoria
           enum:
-            - No local do imóvel
+            - No local
             - Outro
         address:
           $ref: '#/components/schemas/AccessInformationAddress'
