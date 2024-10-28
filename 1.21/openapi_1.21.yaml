@@ -1910,6 +1910,7 @@ components:
                 description: "Endereço de e-mail do destinatário"
               reports:
                 type: array
+                description: "Tipos de relatórios que serão enviados ao destinatário (para conferência, apenas 'full_damages' está disponível)"
                 items:
                   type: string
                   example: "full_damages"
@@ -1933,6 +1934,7 @@ components:
                 description: "Endereço de e-mail do destinatário"
               reports:
                 type: array
+                description: "Tipos de relatórios que serão enviados ao destinatário (full_damages = relatório completo, full_damages_owner = relatório com apontamentos de interesse do locador e/ou full_damages_tenant = relatório com apontamentos de interesse do locatário/inquilino)"
                 items:
                   type: string
                   example: "full_damages"
@@ -1956,6 +1958,7 @@ components:
                 description: "Endereço de e-mail do destinatário"
               reports:
                 type: array
+                description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria e/ou full = relatório com apontamentos/não conformidades que requerem maior atenção)"
                 items:
                   type: string
                   example: "full_damages"
