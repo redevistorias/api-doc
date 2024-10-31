@@ -1958,11 +1958,11 @@ components:
                 description: "Endereço de e-mail do destinatário"
               reports:
                 type: array
-                description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria e/ou full = relatório com apontamentos/não conformidades que requerem maior atenção)"
+                description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria)"
                 items:
                   type: string
                   example: "full_damages"
-                  description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria e/ou full = relatório com apontamentos/não conformidades que requerem maior atenção)"
+                  description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria)"
     BudgetDuringInspection:
       type: object
       description: "Opções de orçamento a serem consideradas durante a vistoria de saída do imóvel. (opcional, inclua somente se for utilizar)"
