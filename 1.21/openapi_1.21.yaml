@@ -1961,7 +1961,7 @@ components:
                 description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria)"
                 items:
                   type: string
-                  example: "full_damages"
+                  example: "full_inspection"
                   description: "Tipos de relatórios que serão enviados ao destinatário (full_inspection = relatório padrão de vistoria)"
     BudgetDuringInspection:
       type: object
