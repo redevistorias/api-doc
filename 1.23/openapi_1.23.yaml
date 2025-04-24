@@ -1553,6 +1553,10 @@ components:
             - saida
             - transferencia
             - conferencia
+            - fotosDeCaptacao
+            - aditivo
+            - tourVirtual
+            - inventario
         building_type:
           type: string
           example: Casa
