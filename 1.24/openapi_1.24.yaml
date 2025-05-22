@@ -402,7 +402,7 @@ components:
         trace_data:
           $ref: "#/components/schemas/TraceData"
         franchisee:
-          $ref: "#/components/schemas/FranchiseeInWebhook"
+          $ref: "#/components/schemas/Franchisee"
     Address:
       type: object
       required:
@@ -706,7 +706,7 @@ components:
         trace_data:
           $ref: "#/components/schemas/TraceData"
         franchisee:
-          $ref: "#/components/schemas/FranchiseeInWebhook"
+          $ref: "#/components/schemas/Franchisee"
         observation:
           type: string
           example: Detalhes informados pela RV
@@ -1673,7 +1673,7 @@ components:
         trace_data:
           $ref: "#/components/schemas/TraceData"
         franchisee:
-          $ref: "#/components/schemas/FranchiseeInWebhook"
+          $ref: "#/components/schemas/Franchisee"
     Report:
       type: object
       properties:
@@ -1940,7 +1940,7 @@ components:
     TraceData:
       type: object
       title: TraceData
-    FranchiseeInWebhook:
+    Franchisee:
       type: object
       properties:
         name:
@@ -1973,7 +1973,7 @@ components:
         trace_data:
           $ref: "#/components/schemas/TraceData"
         franchisee:
-          $ref: "#/components/schemas/FranchiseeInWebhook"
+          $ref: "#/components/schemas/Franchisee"
         price:
           type: string
           example: "50.00"
@@ -2004,7 +2004,7 @@ components:
         schedule:
           $ref: "#/components/schemas/Schedule"
         franchisee:
-          $ref: "#/components/schemas/FranchiseeInWebhook"
+          $ref: "#/components/schemas/Franchisee"
     Inspector:
       type: object
       properties:
