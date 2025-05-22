@@ -401,6 +401,8 @@ components:
           description: Observações sobre o pedido
         trace_data:
           $ref: "#/components/schemas/TraceData"
+        franchisee:
+          $ref: "#/components/schemas/FranchiseeInWebhook"
     Address:
       type: object
       required:
@@ -703,6 +705,8 @@ components:
             $ref: "#/components/schemas/Report"
         trace_data:
           $ref: "#/components/schemas/TraceData"
+        franchisee:
+          $ref: "#/components/schemas/FranchiseeInWebhook"
         observation:
           type: string
           example: Detalhes informados pela RV
@@ -1668,6 +1672,8 @@ components:
           description: Razão da recusa
         trace_data:
           $ref: "#/components/schemas/TraceData"
+        franchisee:
+          $ref: "#/components/schemas/FranchiseeInWebhook"
     Report:
       type: object
       properties:
@@ -1934,6 +1940,13 @@ components:
     TraceData:
       type: object
       title: TraceData
+    FranchiseeInWebhook:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Rede Vistorias
+          description: Nome da unidade responsável pelo pedido
     CanceledWebhook:
       type: object
       properties:
@@ -1959,6 +1972,8 @@ components:
           description: Razão do cancelamento
         trace_data:
           $ref: "#/components/schemas/TraceData"
+        franchisee:
+          $ref: "#/components/schemas/FranchiseeInWebhook"
         price:
           type: string
           example: "50.00"
@@ -1988,6 +2003,8 @@ components:
           $ref: "#/components/schemas/TraceData"
         schedule:
           $ref: "#/components/schemas/Schedule"
+        franchisee:
+          $ref: "#/components/schemas/FranchiseeInWebhook"
     Inspector:
       type: object
       properties:
