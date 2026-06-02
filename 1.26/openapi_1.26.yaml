@@ -43,17 +43,12 @@ tags:
       A API da Rede Vistorias provê uma rota para simular o preço de uma
       vistoria.
   - name: Webhook
-    description: >-
-      O serviço da Rede Vistorias utiliza webhooks para notificar a ferramenta de integração utilizada pelo cliente sobre
-      mudanças do estado do pedido realizado. Esse webhook deve ter caráter público e é informado pelo
-      usuário do sistema no momento de criação da integração. Os eventos
-      existentes são emitidos sempre para a mesma URL seguindo o fluxo do pedido quando é aprovado, rejeitado, atribuído ou
-      finalizado.
+    description: |
+      O serviço da Rede Vistorias utiliza webhooks para notificar a ferramenta de integração utilizada pelo cliente sobre mudanças do estado do pedido realizado. Esse webhook deve ter caráter público e é informado pelo usuário do sistema no momento de criação da integração. Os eventos existentes são emitidos sempre para a mesma URL seguindo o fluxo do pedido quando é aprovado, rejeitado, atribuído ou finalizado.
 
       ### Autenticação de Webhooks
 
-      Todas as requisições de webhook incluem um header `X-Webhook-Signature` para verificação de autenticidade.
-      A assinatura é gerada usando HMAC-SHA256 com a `api_key` da integração como secret.
+      Todas as requisições de webhook incluem um header `X-Webhook-Signature` para verificação de autenticidade. A assinatura é gerada usando HMAC-SHA256 com a `api_key` da integração como secret.
 
       **Header:**
       ```
@@ -77,10 +72,7 @@ tags:
 
       ### Override de Webhook por Pedido
 
-      Ao criar um pedido, é possível informar opcionalmente `webhook_url` e `webhook_secret`
-      para substituir temporariamente a URL e o secret padrão da integração **apenas para aquele pedido**.
-      Quando presentes, todas as notificações daquele order code serão enviadas exclusivamente para a URL informada,
-      com a assinatura usando o secret informado, ignorando os hooks cadastrados na integração.
+      Ao criar um pedido, é possível informar opcionalmente `webhook_url` e `webhook_secret` para substituir temporariamente a URL e o secret padrão da integração **apenas para aquele pedido**. Quando presentes, todas as notificações daquele order code serão enviadas exclusivamente para a URL informada, com a assinatura usando o secret informado, ignorando os hooks cadastrados na integração.
   - name: Upload URL
     description: >-
       A API da Rede Vistorias provê uma rota para upload de arquivos em nossa plataforma,
