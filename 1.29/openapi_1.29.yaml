@@ -492,6 +492,12 @@ components:
             Data de liberação para execução da vistoria (formato `YYYY-MM-DD HH:mm:ss`).
             Enviado somente quando a data de liberação estiver definida no pedido;
             caso contrário, o campo é omitido.
+        accompanied_inspection:
+          allOf:
+            - $ref: "#/components/schemas/AccompaniedInspection"
+          description: >-
+            Dados do acompanhamento da vistoria. Enviado somente quando o acompanhamento
+            estiver definido no pedido; caso contrário, o campo é omitido.
         observation:
           type: string
           example: As chaves serão retiradas na imobiliária às 14h do dia 22.
@@ -1852,6 +1858,11 @@ components:
             Data de liberação para execução da vistoria (formato `YYYY-MM-DD HH:mm:ss`).
             Enviado somente quando a data de liberação estiver definida no pedido;
             caso contrário, o campo é omitido.
+        accompanied_inspection:
+          allOf:
+            - $ref: "#/components/schemas/AccompaniedInspection"
+          description: >-
+            Dados do acompanhamento da vistoria.
         observation:
           type: string
           example: Endereço não tem cobertura do serviço
@@ -2478,7 +2489,9 @@ components:
         schedule_date:
           type: string
           example: "2020-03-03 11:45:00"
-          description: Data agendada de acompanhamento da vistoria
+          description: >-
+            Data agendada de acompanhamento da vistoria. Nos webhooks é enviada
+            no formato `YYYY-MM-DD HH:mm:ss`.
     Recommendation:
       type: object
       properties:
