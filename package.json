@@ -1,8 +1,16 @@
 {
   "name": "redevistorias-api-doc",
-  "version": "1.0",
+  "version": "1.31.0",
   "description": "API documentation from Rede Vistorias",
-  "dependencies": {
-    "redoc": "^2.0.0-alpha.40"
+  "scripts": {
+    "build": "redocly build-docs 1.31/openapi_1.31.yaml --output 1.31/index.html",
+    "build:1.31": "redocly build-docs 1.31/openapi_1.31.yaml --output 1.31/index.html",
+    "lint": "redocly lint 1.31/openapi_1.31.yaml",
+    "lint:1.31": "redocly lint 1.31/openapi_1.31.yaml",
+    "preview": "redocly preview-docs 1.31/openapi_1.31.yaml",
+    "preview:1.31": "redocly preview-docs 1.31/openapi_1.31.yaml"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.27.0"
   }
 }

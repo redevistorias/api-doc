@@ -1,0 +1,7 @@
+apis:
+  main:
+    root: 1.31/openapi_1.31.yaml
+
+rules:
+  security-defined: off
+  no-unused-components: warn
