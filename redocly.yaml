@@ -1,6 +1,6 @@
 apis:
   main:
-    root: 1.31/openapi_1.31.yaml
+    root: 1.32/openapi_1.32.yaml
 
 rules:
   security-defined: off
