@@ -333,18 +333,13 @@ paths:
     get:
       tags:
         - Pedidos
-      summary: Listar pedidos
+      summary: Listar pedidos.
       description: |
-        Retorna uma lista paginada e enxuta dos pedidos pertencentes ao cliente ou unidade autenticada, projetada para **importação e reconciliação de histórico**.<br/><br/>
-        **Identificadores sem ambiguidade:**
-        - `code`: Código único do pedido na Rede Vistorias (ex.: `PVLE.987.00125`), utilizado como identificador principal em todas as rotas (`GET /orders/{code}`, `DELETE /orders/{code}`) e webhooks.
-        - `building_id`: Descrição/identificação do imóvel informada no pedido.<br/><br/>
-        **Boas práticas com Rate Limit (`120 req/min`) e Paginação:**
-        - Utilize `limit=50` (máximo permitido) e pagine com `offset`.
-        - Na carga inicial de histórico, filtre por `status=FINISHED` e janelas de período (`created_from`/`created_to` ou `sent_from`/`sent_to`) em vez de varrer todo o histórico de uma só vez.
-        - Para sincronização contínua, priorize os **Webhooks** em tempo real e utilize este endpoint apenas como reconciliação/*backfill* periódico.
-        - Monitore `X-RateLimit-Remaining`, `X-RateLimit-Reset` e respeite `Retry-After` caso receba `429 Too Many Requests`.
-        - Escopos OAuth2 aceitos: `order:read` ou `order:create`.
+        Retorna uma lista paginada dos pedidos de vistoria vinculados à sua conta, ideal para consulta e importação de histórico.<br /><br />
+        Cada item retorna o código único do pedido (`code`), status atual, tipo de vistoria, identificação do imóvel (`building_id`), endereço, `trace_data` e as datas de criação (`created_at`) e envio (`sent_at`).<br /><br />
+        <strong>Boas práticas de consulta:</strong>
+        - Utilize `limit=50` (máximo por página) com `offset` para paginar o histórico, aplicando filtros de status e período (`created_from`/`created_to` ou `sent_from`/`sent_to`) quando aplicável.
+        - Para acompanhar atualizações em tempo real de novos pedidos, utilize os <a href="#tag/Webhook">Webhooks</a> em conjunto com esta rota para sincronizações periódicas.
       operationId: listPedidos
       parameters:
         - in: header
@@ -501,15 +496,13 @@ paths:
     get:
       tags:
         - Pedidos
-      summary: Obter detalhes de um pedido
+      summary: Obter detalhes de um pedido.
       description: |
-        Retorna os dados consolidados de um pedido específico, estruturados para importação pelo integrador:<br/><br/>
-        - **Metadados essenciais:** `code` (identificador único do pedido), `status`, `inspection_type`, `building_id`, `created_at` e `sent_at` (ISO-8601 no fuso horário local; `sent_at` é `null` caso o pedido ainda não tenha sido enviado/finalizado).
-        - **Dados do pedido (`form`):** Campos do formulário do pedido no mesmo formato aceito no `POST /orders` (`details`, `address`, `keys`, `cost`, `people`, `access_information`, `accompanied_inspection`, `previous_inspection`, `attachments`, `report_submission`, `budget_during_inspection`, `vacation_notice`, `recommendation`, `notes`, `trace_data`, `responsible`, `contract`).
-        - **Relatórios atuais (`reports`):** Apenas o arquivo final mais recente de cada tipo e variação de destinatário (ex.: geral, proprietário, inquilino, contestação).
-        - **Downloads temporários (TTL 60 min):** Anexos em `form.attachments[].download_url` e arquivo anterior em `form.previous_inspection.file.download_url` recebem URLs pré-assinadas do S3 válidas por **60 minutos** (não persista essas URLs em cache de longo prazo).
-        - **Compatibilidade legada:** Caso o query parameter legado `?infos=...` seja informado explicitamente, a rota mantém o comportamento anterior de dados processados.
-        - **Escopos OAuth2 aceitos:** `order:read` ou `order:create`.
+        Retorna os dados completos de um pedido específico a partir do seu código (`code`), incluindo metadados, dados do formulário, anexos e relatórios finais disponíveis.<br /><br />
+        - **Datas e status:** `created_at` e `sent_at` seguem o padrão ISO-8601 no fuso horário local (`sent_at` será `null` enquanto a vistoria não tiver sido enviada).
+        - **Dados do pedido (`form`):** Campos do formulário do pedido no mesmo formato aceito no `POST /orders`, incluindo `attachments` e `previous_inspection`.
+        - **Relatórios (`reports`):** Arquivo final mais recente de cada tipo e variação de destinatário disponível para o pedido.
+        - **Downloads temporários:** As URLs de download em `form.attachments[].download_url` e `form.previous_inspection.file.download_url` possuem validade temporária de 60 minutos e não devem ser armazenadas em cache de longo prazo.
       operationId: getPedidoDetalhes
       parameters:
         - in: header
@@ -4012,7 +4005,7 @@ components:
           format: uri
           nullable: true
           example: "https://s3.amazonaws.com/..."
-          description: URL temporária pré-assinada do S3 para download direto (validade de 60 minutos).
+          description: URL temporária para download direto do arquivo (validade de 60 minutos).
     OrderReportItem:
       type: object
       properties:
